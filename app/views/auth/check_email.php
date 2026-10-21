@@ -1,0 +1,7 @@
+<?php $title = 'Check your email'; ?>
+<div class="panel auth-card narrow-panel">
+  <h1>Check your email</h1>
+  <p class="notice success" role="status">We've sent a message to <strong><?= e($email) ?></strong>. Follow the link in it to confirm your address, then sign in. The link works for 24 hours.</p>
+  <p class="muted">Nothing after a few minutes? Check your spam folder. If you already have an account with this email, we've sent you a reminder instead; you can <a href="<?= e(url('/account/forgot')) ?>">reset your password</a> if you need to.</p>
+  <p><a class="btn btn-primary" href="<?= e(url('/account/login')) ?>">Go to sign in</a></p>
+</div>

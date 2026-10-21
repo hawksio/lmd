@@ -1,0 +1,55 @@
+{
+  "_note": "Default website content. Empty settings render as clearly labelled placeholders. Staff change these in /admin/content; publishing there overrides this file (instance/content/published.json) and rebuilds public/. Only enter facts that have been verified.",
+  "settings": {
+    "legal_name": "LMD Finance Ltd",
+    "trading_name": "LMD Finance",
+    "company_number": "",
+    "registered_office": "",
+    "phone": "",
+    "email": "",
+    "opening_hours": "",
+    "regulatory_statement": "",
+    "ico_registration": "",
+    "complaints_contact": "",
+    "example_apr": "",
+    "announcement": ""
+  },
+  "faqs": [
+    {
+      "q": "How do I apply?",
+      "a": "Create an account in the client portal, confirm your email address, then complete the application form. You can save a draft and come back to it at any time before you submit."
+    },
+    {
+      "q": "What information will you ask for?",
+      "a": "Details of your business (name, type, Companies House number for limited companies and LLPs, industry, time trading, turnover and address) and the finance you are looking for (type, amount, term and purpose). We only ask for what is needed to assess the request."
+    },
+    {
+      "q": "Which documents might I need to upload?",
+      "a": "Your adviser will tell you exactly what is needed for your application. It is often recent business bank statements, filed accounts or management figures, and proof of identity. The portal accepts PDF, JPG and PNG files up to 10 MB each."
+    },
+    {
+      "q": "How are my documents protected?",
+      "a": "Uploaded files are checked, stored under random names in a private area that is not reachable from the public website, and can only be opened by you and by authorised staff after signing in. Every staff download is recorded."
+    },
+    {
+      "q": "How do I know where my application stands?",
+      "a": "Sign in to the client portal. Each application shows its current status, a timeline of the main steps, messages with your adviser and any documents. We also email you when the status changes."
+    },
+    {
+      "q": "Does \"approved\" mean the money has been paid?",
+      "a": "No. Approval is a decision to offer finance, usually subject to conditions. You then receive an agreement to review and sign. Funds are only paid after the agreement is signed, and the portal shows \"Funds disbursed\" only once a payment has actually been made and checked by our team."
+    },
+    {
+      "q": "Will LMD Finance ever ask for my password or a code by email or phone?",
+      "a": "No. We will never ask for your password, your two-step verification codes or your full bank card details. If someone does, do not share them and contact us using the details on this website."
+    },
+    {
+      "q": "How do I make a complaint?",
+      "a": "Please see our complaints page, which explains how to raise a complaint and what happens next."
+    },
+    {
+      "q": "How do I stop marketing emails?",
+      "a": "We only send marketing emails if you have opted in. Every marketing email has an unsubscribe link, and you can change your preference at any time under Account and security in the client portal."
+    }
+  ]
+}

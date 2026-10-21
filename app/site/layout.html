@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{title}}</title>
+<meta name="description" content="{{description}}">
+<meta name="robots" content="{{robots}}">
+<link rel="canonical" href="{{canonical}}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LMD Finance">
+<meta property="og:title" content="{{title}}">
+<meta property="og:description" content="{{description}}">
+<meta property="og:url" content="{{canonical}}">
+<meta property="og:image" content="{{og_image}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0C1A1D">
+<link rel="icon" href="{{root}}brand/lmd-monogram.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+{{styles_before}}
+<link rel="stylesheet" href="{{root}}assets/site.css">
+{{styles}}
+<script src="{{root}}assets/site.js" defer></script>
+</head>
+<body class="{{body_class}}">
+<a class="skip" href="#main">Skip to content</a>
+{{notices}}
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="{{root}}index.html" aria-label="LMD Finance Ltd home">
+      <img src="{{root}}brand/lmd-monogram.svg" width="40" height="40" alt="">
+      <span class="brand-text"><strong>LMD Finance</strong><small>Ltd</small></span>
+    </a>
+    <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav"><span class="sr">Menu</span><span class="bars" aria-hidden="true"></span></button>
+    <nav id="site-nav" class="site-nav" aria-label="Main">
+      <ul>
+{{nav}}
+      </ul>
+      <a class="btn btn-primary btn-sm" href="/account/">Client portal</a>
+    </nav>
+  </div>
+</header>
+<main id="main">
+{{content}}
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand brand-light" href="{{root}}index.html">
+        <img src="{{root}}brand/lmd-monogram.svg" width="40" height="40" alt="">
+        <span class="brand-text"><strong>LMD Finance</strong><small>Ltd</small></span>
+      </a>
+      <p class="muted-light">Business finance for UK businesses, explained in plain English.</p>
+    </div>
+    <div>
+      <h2 class="footer-h">Company</h2>
+      <ul class="footer-links">
+        <li><a href="{{root}}about.html">About us</a></li>
+        <li><a href="{{root}}how-it-works.html">How it works</a></li>
+        <li><a href="{{root}}faq.html">FAQs</a></li>
+        <li><a href="{{root}}contact.html">Contact</a></li>
+        <li><a href="{{root}}complaints.html">Complaints</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="footer-h">Legal</h2>
+      <ul class="footer-links">
+        <li><a href="{{root}}privacy.html">Privacy notice</a></li>
+        <li><a href="{{root}}cookies.html">Cookie policy</a></li>
+        <li><a href="{{root}}terms.html">Website terms</a></li>
+        <li><a href="{{root}}accessibility.html">Accessibility</a></li>
+      </ul>
+    </div>
+    <div>
+      <h2 class="footer-h">Talk to us</h2>
+      <ul class="footer-links">
+        <li>{{tel:phone}}</li>
+        <li>{{mailto:email}}</li>
+        <li>{{site:opening_hours}}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="wrap legal">
+    <p>{{site:legal_name}}. Registered in England &amp; Wales, company number {{site:company_number}}. Registered office: {{site:registered_office}}. {{site:regulatory_statement}}</p>
+    <p>&copy; <span data-year>2026</span> {{site:legal_name}}</p>
+  </div>
+</footer>
+{{scripts}}
+</body>
+</html>

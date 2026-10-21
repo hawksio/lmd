@@ -1,0 +1,55 @@
+<?php $title = 'Organisation settings'; ?>
+<div class="page-head"><div><h1>Organisation settings</h1><p>Branding, workflow and notifications for <?= e($the_org['name']) ?>. Company details shown to customers are under Website content.</p></div></div>
+<form method="post" class="panel form" novalidate>
+  <?= csrf_field() ?>
+  <section class="form-section">
+    <h2>Branding</h2>
+    <div class="grid-fields">
+      <div><label for="name">Organisation name</label><input id="name" name="name" value="<?= e($the_org['name']) ?>" maxlength="120"><?= field_error($errors, 'name') ?></div>
+      <div><label for="brand_color">Brand colour</label><input id="brand_color" name="brand_color" value="<?= e($the_org['brand_color']) ?>" maxlength="7" pattern="#[0-9A-Fa-f]{6}">
+        <p class="hint">Hex, e.g. #F08A6E. Button text colour is chosen automatically for contrast.</p><?= field_error($errors, 'brand_color') ?></div>
+      <div><label for="default_currency">Default currency</label><select id="default_currency" name="default_currency"><?= options_html(array_combine(array_keys(CURRENCIES), array_keys(CURRENCIES)), $the_org['default_currency']) ?></select></div>
+      <div><label for="email_signature">Signature on letters and emails</label><input id="email_signature" name="email_signature" value="<?= e($s['email_signature']) ?>" maxlength="300"></div>
+    </div>
+  </section>
+  <section class="form-section">
+    <h2>Approval workflow</h2>
+    <label class="check"><input type="checkbox" name="require_verified_documents_for_underwriting" value="1"<?= checked($s['require_verified_documents_for_underwriting']) ?>> Require every required document to be verified before a decision can be proposed</label>
+    <label class="check"><input type="checkbox" name="require_offer_acceptance_before_agreement" value="1"<?= checked($s['require_offer_acceptance_before_agreement']) ?>> Require the customer to accept the offer in the portal before an agreement is prepared</label>
+    <div class="narrow-form"><label for="second_approval_threshold">Second-approval threshold</label>
+      <input id="second_approval_threshold" name="second_approval_threshold" inputmode="decimal" value="<?= e(number_format(((int) $s['second_approval_threshold_minor']) / 100, 2, '.', '')) ?>">
+      <p class="hint">Approvals at or above this amount must be issued by a different person from the proposer. 0 = every approval. Products can override it.</p>
+      <?= field_error($errors, 'second_approval_threshold') ?></div>
+  </section>
+  <section class="form-section">
+    <h2>Notifications</h2>
+    <label class="check"><input type="checkbox" name="notify_staff_new_application" value="1"<?= checked($s['notify_staff_new_application']) ?>> Email staff about new applications</label>
+    <label class="check"><input type="checkbox" name="notify_staff_client_message" value="1"<?= checked($s['notify_staff_client_message']) ?>> Email staff about customer messages</label>
+    <div><label for="staff_notification_emails">Send staff emails to (optional)</label><input id="staff_notification_emails" name="staff_notification_emails" value="<?= e($s['staff_notification_emails']) ?>" maxlength="500">
+      <p class="hint">Comma-separated. Empty = administrators and underwriters.</p><?= field_error($errors, 'staff_notification_emails') ?></div>
+  </section>
+  <section class="form-section">
+    <h2>Percentage limits</h2>
+    <p>Optional lower limits for your Financial settings. The platform limit applies if empty.</p>
+    <div class="grid-fields"><?php foreach (RULE_KINDS as $k => $v): ?>
+      <div><label for="max_<?= e($k) ?>"><?= e($v) ?> (max %)</label><input id="max_<?= e($k) ?>" name="max_<?= e($k) ?>" inputmode="decimal" value="<?= e($s['max_percent'][$k] ?? '') ?>" placeholder="Platform limit <?= e($caps[$k]) ?>%"><?= field_error($errors, "max_$k") ?></div>
+    <?php endforeach ?></div>
+  </section>
+  <section class="form-section">
+    <h2>Loan agreement template</h2>
+    <label class="check"><input type="checkbox" name="agreement_template_approved" value="1"<?= checked($s['agreement_template_approved']) ?>> A qualified solicitor has approved our loan agreement template and the disclosures it contains</label>
+    <?php if (!$s['agreement_template_approved']): ?><div class="narrow-form"><label for="template_confirmation">Type APPROVED BY SOLICITOR to confirm</label><input id="template_confirmation" name="template_confirmation" autocomplete="off"></div><?php endif ?>
+    <?= field_error($errors, 'agreement_template_approved') ?>
+    <p class="hint">Until this is confirmed, agreements can be drafted (stamped "template not legally reviewed") but not issued. The change is recorded in the audit log.</p>
+  </section>
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Save settings</button></div>
+</form>
+<section class="panel">
+  <h2>Logo</h2>
+  <?php if ($the_org['logo_file']): ?><p><img src="<?= e(url('/branding/logo')) ?>?v=<?= e($the_org['logo_file']) ?>" alt="Current logo" class="logo-preview"></p><?php endif ?>
+  <form method="post" action="<?= e(url('/admin/settings/logo')) ?>" enctype="multipart/form-data" class="upload">
+    <?= csrf_field() ?>
+    <div><label for="logo">PNG or JPG, up to 1 MB</label><input id="logo" name="logo" type="file" accept=".png,.jpg,.jpeg" required></div>
+    <button class="btn btn-dark btn-sm" type="submit">Upload logo</button>
+  </form>
+</section>

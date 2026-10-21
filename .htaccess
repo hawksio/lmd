@@ -1,0 +1,28 @@
+# LMD loan platform (PHP edition) for Apache / LiteSpeed shared hosting.
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # Pass the Authorization header through (staging lock).
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  # Force HTTPS once a certificate is active (uncomment after SSL is issued).
+  # RewriteCond %{HTTPS} !=on
+  # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # The application code is never served directly.
+  RewriteRule ^app(/|$) - [F,L]
+  RewriteRule (^|/)\. - [F,L]
+  # Real files (assets, images) are served as they are; everything else goes to index.php.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ index.php [L,QSA]
+</IfModule>
+
+<FilesMatch "\.(sqlite3|sql|log|eml|json|md|ini|sh)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  <FilesMatch "\.(css|js|svg|jpg|jpeg|png|webp|avif|woff2)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+</IfModule>
