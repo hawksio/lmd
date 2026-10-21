@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, input, select, error %}
+{% block title %}{{ 'Edit campaign' if campaign else 'New campaign' }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('marketing.campaigns') }}">Marketing</a>
+<div class="page-head"><div><h1>{{ 'Edit campaign' if campaign else 'New campaign' }}</h1><p>Write in plain text. It is placed into the branded template with the unsubscribe link and company details.</p></div></div>
+<form method="post" class="panel form" novalidate>
+  {{ csrf() }}
+  {{ input('name', 'Internal name', form, errors, required=true, maxlength=120) }}
+  {{ input('subject', 'Subject line', form, errors, required=true, maxlength=150) }}
+  {{ input('preheader', 'Preview text (optional)', form, errors, maxlength=200) }}
+  {{ select('segment', 'Audience', SEGMENTS, form, errors, required=true) }}
+  <div>
+    <label for="body">Message <span class="muted">*</span></label>
+    <textarea id="body" name="body" rows="12" maxlength="8000" {% if errors.body %}aria-invalid="true" aria-describedby="body-error"{% endif %}>{{ form.get('body', '') }}</textarea>
+    <p class="hint">Blank lines start new paragraphs. Don't include rates, repayment examples or offers unless compliance has approved them as a financial promotion.</p>
+    {{ error(errors, 'body') }}
+  </div>
+  <div><button class="btn btn-primary" type="submit">Save draft</button></div>
+</form>
+{% endblock %}

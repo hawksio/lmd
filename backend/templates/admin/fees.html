@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "_macros.html" import fee_badge %}
+{% block title %}Fees and payments{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Fees and payments</h1><p>Charges recorded under signed agreements. "Paid" only once a payment has actually been confirmed.</p></div></div>
+<nav class="chips" aria-label="Filter">{% for s in ['', 'pending', 'paid', 'waived', 'refunded', 'cancelled'] %}<a class="chip" href="{{ url_for('finance.fees', status=s or None) }}" {% if status == s %}aria-current="true"{% endif %}>{{ s|capitalize or 'All' }}</a>{% endfor %}</nav>
+{% if rows %}
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Fee</th><th>Application</th><th>Amount</th><th>When payable</th><th>Status</th></tr></thead>
+  <tbody>{% for f in rows %}
+    <tr><td>{{ f.name }}<span class="sub">{{ RULE_KINDS.get(f.kind, f.kind) }}</span></td>
+      <td><a href="{{ url_for('admin.application', app_id=f.application_id) }}#fees">{{ f.company_name }}</a><span class="sub">{{ f.application_id|ref }}</span></td>
+      <td>{{ money(f.amount_minor, f.currency) }}{% if f.percent %}<span class="sub">{{ f.percent }}% of {{ money(f.basis_minor, f.currency) }}</span>{% endif %}</td>
+      <td class="small">{{ f.payable_when }}</td><td>{{ fee_badge(f.status) }}</td></tr>
+  {% endfor %}</tbody></table></div>
+{% else %}<div class="panel empty"><p>No fee records.</p></div>{% endif %}
+{% endblock %}

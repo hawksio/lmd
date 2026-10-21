@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Enquiries{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Website enquiries</h1><p>From the contact form on the website.</p></div></div>
+<nav class="chips" aria-label="Filter enquiries">
+  <a class="chip" href="{{ url_for('admin.enquiries', show='open') }}" {% if show != 'all' %}aria-current="true"{% endif %}>Open</a>
+  <a class="chip" href="{{ url_for('admin.enquiries', show='all') }}" {% if show == 'all' %}aria-current="true"{% endif %}>All</a>
+</nav>
+{% if enquiries %}
+<div class="table-wrap">
+  <table class="data">
+    <thead><tr><th>From</th><th>Interest</th><th>Message</th><th>Received</th><th></th></tr></thead>
+    <tbody>
+      {% for e in enquiries %}
+      <tr>
+        <td><a href="{{ url_for('admin.enquiry', enq_id=e.id) }}">{{ e.name }}</a><span class="sub">{{ e.company }}</span><span class="sub">{{ e.email }}{% if e.phone %} · {{ e.phone }}{% endif %}</span></td>
+        <td>{{ TOPICS.get(e.topic, e.topic) }}</td>
+        <td class="clip">{{ e.message[:220] or '—' }}{% if e.message|length > 220 %}…{% endif %}</td>
+        <td class="muted small">{{ e.created_at|date }}</td>
+        <td>
+          {% if can('handle_enquiries') %}
+          <form method="post" action="{{ url_for('admin.enquiry_handled', enq_id=e.id, show=show) }}">
+            {{ csrf() }}
+            <button class="btn btn-sm {{ 'btn-outline' if e.handled else 'btn-dark' }}" type="submit">{{ 'Reopen' if e.handled else 'Mark handled' }}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="panel empty"><p>{{ 'No open enquiries.' if show != 'all' else 'No enquiries yet.' }}</p></div>
+{% endif %}
+{% endblock %}

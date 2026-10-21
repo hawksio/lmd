@@ -1,0 +1,7 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}New enquiry from {{ enquiry.company }}.{% endblock %}
+{% block body %}
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">Website enquiry</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">{{ enquiry.company }}</h1><p style="margin:0 0 16px;">{{ enquiry.name }} sent an enquiry about {{ TOPICS.get(enquiry.topic, enquiry.topic) }}.</p>{{ button(base_url + '/admin/enquiries/' ~ enquiry.id, 'Open enquiry') }}
+{% endblock %}
+{% block footer %}Staff notification. Sent to the LMD Finance team.{% endblock %}

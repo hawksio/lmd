@@ -1,0 +1,10 @@
+Hello {{ (client or user).full_name.split(' ')[0] }},
+
+We're letting you know that {{ what }} on your LMD Finance account at {{ now }} UTC.
+
+If this was you, there's nothing to do. If it wasn't, reset your password now and contact us:
+{{ base_url }}/account/forgot
+
+For your security we never ask for passwords, codes or bank details by email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

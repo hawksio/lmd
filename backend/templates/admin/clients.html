@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Clients</h1><p>{{ total }} registered{% if q %} matching “{{ q }}”{% endif %}.</p></div></div>
+<form class="filters" method="get" role="search">
+  <div><label for="q">Search</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Name or email" maxlength="100"></div>
+  <button class="btn btn-dark btn-sm" type="submit">Search</button>
+</form>
+{% if clients %}
+<div class="table-wrap">
+  <table class="data">
+    <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Submitted applications</th><th>Registered</th><th>Security</th></tr></thead>
+    <tbody>
+      {% for c in clients %}
+      <tr>
+        <td><strong>{{ c.full_name }}</strong>{% if not c.is_active %}<span class="sub">Deactivated</span>{% endif %}</td>
+        <td><a href="{{ url_for('admin.applications', q=c.email) }}">{{ c.email }}</a>{% if not c.email_verified_at %}<span class="sub">Email not confirmed</span>{% endif %}</td>
+        <td>{{ c.phone or '' }}</td>
+        <td>{{ c.apps }}</td>
+        <td class="muted small">{{ c.created_at|date }}</td>
+        <td class="small">{{ 'Two-step on' if c.totp_enabled_at else 'Password only' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ pager(page, pages, 'admin.clients') }}
+{% else %}<div class="panel empty"><p>No clients found.</p></div>{% endif %}
+{% endblock %}

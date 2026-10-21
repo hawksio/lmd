@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Disbursements{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Disbursements</h1><p>Payments to customers. Only <strong>confirmed</strong> payments have been checked against the bank record.</p></div></div>
+<nav class="chips" aria-label="Filter">{% for s in ['', 'scheduled', 'pending', 'confirmed', 'rejected', 'cancelled', 'reversed'] %}<a class="chip" href="{{ url_for('finance.disbursements', status=s or None) }}" {% if status == s %}aria-current="true"{% endif %}>{{ {'': 'All', 'pending': 'Awaiting confirmation'}.get(s, s|capitalize) }}</a>{% endfor %}</nav>
+{% if rows %}
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Application</th><th>Amount</th><th>Planned / paid</th><th>Reference</th><th>Status</th></tr></thead>
+  <tbody>{% for d in rows %}
+    <tr><td><a href="{{ url_for('admin.application', app_id=d.application_id) }}#payments">{{ d.company_name }}</a><span class="sub">{{ d.application_id|ref }} · {{ d.full_name }}</span></td>
+      <td>{{ money(d.amount_pence, d.currency) }}{% if d.fees_deducted_minor %}<span class="sub">{{ money(d.fees_deducted_minor, d.currency) }} fees deducted</span>{% endif %}</td>
+      <td class="small">{{ d.scheduled_for or '' }}{% if d.paid_on %}<span class="sub">paid {{ d.paid_on }}</span>{% endif %}</td>
+      <td class="small">{{ d.payment_reference }}</td><td><span class="tag-sm tag-{{ {'confirmed': 'verified', 'pending': 'under_review', 'scheduled': 'submitted'}.get(d.status, 'rejected') }}">{{ d.status|capitalize }}</span></td></tr>
+  {% endfor %}</tbody></table></div>
+{% else %}<div class="panel empty"><p>No payments recorded.</p></div>{% endif %}
+{% endblock %}

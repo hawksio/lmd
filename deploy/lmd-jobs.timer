@@ -1,0 +1,10 @@
+# /etc/systemd/system/lmd-jobs.timer  — runs lmd-jobs.service every 5 minutes
+[Unit]
+Description=LMD Finance scheduled jobs
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

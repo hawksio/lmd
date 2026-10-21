@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% from "_macros.html" import daterange %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Reports</h1><p>{{ start }} to {{ end }}. Each currency is reported separately; approvals are not money, and only confirmed payments count as disbursed or collected.</p></div>
+  {% if can('export_data') %}<a class="btn btn-outline" href="{{ url_for('reports.index', **{'from': start, 'to': end, 'export': 'csv'}) }}">Export CSV</a>{% endif %}</div>
+<form class="filters" method="get">{{ daterange(start, end) }}<button class="btn btn-dark btn-sm" type="submit">Update</button></form>
+
+<div class="tiles">
+  <div class="tile"><strong>{{ r.applications }}</strong><span>Applications submitted</span></div>
+  <div class="tile"><strong>{{ r.approved }}</strong><span>Approved ({{ r.full }} full · {{ r.partial }} partial · {{ r.conditional }} conditional)</span></div>
+  <div class="tile"><strong>{{ r.declined }}</strong><span>Declined</span></div>
+  <div class="tile"><strong>{{ r.approval_rate if r.approval_rate is not none else '–' }}{% if r.approval_rate is not none %}%{% endif %}</strong><span>Approval rate (of decided)</span></div>
+</div>
+<div class="tiles">
+  <div class="tile"><strong>{{ r.avg_review_days if r.avg_review_days is not none else '–' }}</strong><span>Average days, submission to decision</span></div>
+  <div class="tile"><strong>{{ r.verification_backlog }}</strong><span>Documents awaiting verification</span></div>
+  <div class="tile"><strong>{{ r.instalments_paid }}/{{ r.instalments_due }}</strong><span>Instalments due in period and paid</span></div>
+  <div class="tile"><strong>{{ r.staff|length }}</strong><span>Active staff</span></div>
+</div>
+
+{% for cur, v in r.by_currency.items() %}
+<section class="panel">
+  <h2>{{ cur }}: lending and revenue</h2>
+  <div class="layout-2 even">
+    <dl class="facts">
+      <dt>Financing requested</dt><dd>{{ money(v.get('requested', 0), cur) }}</dd>
+      <dt>Financing approved</dt><dd>{{ money(v.get('approved', 0), cur) }}{% if v.get('approved_n') %}<small class="block muted">average {{ money((v.approved / v.approved_n)|int, cur) }}</small>{% endif %}</dd>
+      <dt>Actually disbursed (confirmed)</dt><dd>{{ money(v.get('disbursed', 0), cur) }}</dd>
+      <dt>Repayments received</dt><dd>{{ money(v.get('repaid', 0), cur) }}</dd>
+    </dl>
+    <dl class="facts">
+      <dt>Fees invoiced</dt><dd>{{ money(v.get('fees_invoiced', 0), cur) }}</dd>
+      <dt>Fees collected</dt><dd>{{ money(v.get('fees_collected', 0), cur) }}</dd>
+      <dt>Fees waived</dt><dd>{{ money(v.get('fees_waived', 0), cur) }}</dd>
+      <dt>Fees refunded</dt><dd>{{ money(v.get('fees_refunded', 0), cur) }}</dd>
+      <dt>Fees outstanding</dt><dd>{{ money(v.get('fees_pending', 0), cur) }}</dd>
+      <dt>Interest income (cash basis)</dt><dd>{{ money(v.get('interest_income', 0), cur) }}</dd>
+    </dl>
+  </div>
+</section>
+{% else %}<div class="panel empty"><p>No activity in this period.</p></div>{% endfor %}
+
+{% for cur, b in r.book.items() %}
+<section class="panel">
+  <h2>{{ cur }}: loan book now</h2>
+  <dl class="facts">
+    <dt>Active loans</dt><dd>{{ b.get('loans', 0) }}</dd>
+    <dt>Outstanding principal</dt><dd>{{ money(b.get('outstanding_principal', 0), cur) }}</dd>
+    <dt>Scheduled receivables (principal and interest)</dt><dd>{{ money(b.get('receivable', 0), cur) }}</dd>
+    <dt>Overdue</dt><dd>{{ money(b.get('overdue', 0), cur) }} across {{ b.get('overdue_loans', 0) }} loan(s)</dd>
+  </dl>
+</section>
+{% endfor %}
+
+<div class="layout-2 even">
+  <section class="panel">
+    <h2>Products</h2>
+    <div class="table-wrap"><table class="data compact"><thead><tr><th>Product</th><th>Applications</th><th>Requested</th></tr></thead>
+      <tbody>{% for p in r.products %}<tr><td>{{ p.name or 'No product' }}</td><td>{{ p.n }}</td><td>{{ money((p.requested or 0) * 100, p.currency) }}</td></tr>{% else %}<tr><td colspan="3" class="muted">None.</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+  <section class="panel">
+    <h2>Staff workload</h2>
+    <div class="table-wrap"><table class="data compact"><thead><tr><th>Staff</th><th>Open assigned</th><th>Decisions proposed</th><th>Document reviews</th></tr></thead>
+      <tbody>{% for s in r.staff %}<tr><td>{{ s.full_name }}<span class="sub">{{ STAFF_ROLES[s.role] }}</span></td><td>{{ s.open_assigned }}</td><td>{{ s.proposed }}</td><td>{{ s.reviews }}</td></tr>{% endfor %}</tbody></table></div>
+  </section>
+</div>
+<section class="panel">
+  <h2>Applications by month</h2>
+  {% set mx = (r.months.values()|list + [1])|max %}
+  <ul class="bar-list">{% for m, n in r.months.items() %}<li><span>{{ m }}</span><span class="bar" style="--w: {{ (100 * n / mx)|round|int }}%" aria-hidden="true"></span><strong>{{ n }}</strong></li>{% else %}<li class="muted">No applications in this period.</li>{% endfor %}</ul>
+</section>
+{% endblock %}

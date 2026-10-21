@@ -1,0 +1,16 @@
+{% macro button(href, label) %}
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr><td style="background:#F08A6E;border-radius:999px;">
+  <a href="{{ href }}" style="display:inline-block;padding:14px 28px;color:#112327;font-weight:bold;text-decoration:none;font-size:15px;font-family:Arial,Helvetica,sans-serif;">{{ label }}</a>
+</td></tr></table>
+{% endmacro %}
+
+{% macro facts(rows) %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;border-top:1px solid #DEE6E7;font-size:15px;">
+  {% for label, value in rows %}
+  <tr>
+    <td style="padding:10px 0;border-bottom:1px solid #DEE6E7;color:#56676A;width:42%;vertical-align:top;">{{ label }}</td>
+    <td style="padding:10px 0;border-bottom:1px solid #DEE6E7;color:#112327;font-weight:bold;vertical-align:top;">{{ value }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endmacro %}

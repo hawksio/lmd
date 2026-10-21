@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, error %}
+{% block title %}Choose a new password{% endblock %}
+{% block content %}
+<div class="panel auth-card narrow-panel">
+  {% if invalid %}
+    <h1>This link has expired</h1>
+    <p class="muted">Password links work once and expire. Please request a new one.</p>
+    <p><a class="btn btn-primary" href="{{ url_for('auth.forgot') }}">Send a new link</a></p>
+  {% else %}
+    <h1>Choose a new password</h1>
+    <p class="muted">For {{ email }}. Saving it signs you out on every other device.</p>
+    <form method="post" class="form" novalidate>
+      {{ csrf() }}
+      <div>
+        <label for="password">New password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="10" maxlength="200" required autofocus
+               aria-describedby="password-hint{% if errors.password %} password-error{% endif %}" {% if errors.password %}aria-invalid="true"{% endif %}>
+        <p class="hint" id="password-hint">At least 10 characters.</p>
+        {{ error(errors, 'password') }}
+      </div>
+      <div>
+        <label for="confirm">Confirm new password</label>
+        <input id="confirm" name="confirm" type="password" autocomplete="new-password" required {% if errors.confirm %}aria-invalid="true" aria-describedby="confirm-error"{% endif %}>
+        {{ error(errors, 'confirm') }}
+      </div>
+      <button class="btn btn-primary" type="submit">Save new password</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

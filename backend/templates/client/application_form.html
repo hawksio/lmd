@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, input, select, error %}
+{% block title %}{{ 'Edit application' if app else 'New application' }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('client.applications') }}">My applications</a>
+<div class="page-head">
+  <div>
+    <h1>{{ 'Continue your application' if app else 'Apply for finance' }}</h1>
+    <p>Fields marked * are needed to submit. Save a draft at any point.</p>
+  </div>
+  {% if app %}<span class="muted">{{ app.id|ref }}</span>{% endif %}
+</div>
+
+{% if errors %}
+<div class="notice error" role="alert" tabindex="-1" id="form-errors">
+  {% if errors.form %}<p>{{ errors.form }}</p>{% endif %}
+  {% set field_errors = errors|length - (1 if errors.form else 0) %}
+  {% if field_errors %}<p>Please check the {{ field_errors }} highlighted {{ 'field' if field_errors == 1 else 'fields' }} below.</p>{% endif %}
+</div>
+{% endif %}
+
+<form method="post" class="panel" novalidate id="application-form" data-prefill="{{ '1' if not app and not values else '' }}" data-once>
+  {{ csrf() }}
+  <input type="hidden" name="submission_key" value="{{ submission_key }}">
+  {% if products %}
+  <section class="form-section">
+    <h2>Choose a product</h2>
+    <div class="product-choices">
+      {% for p in products %}{% set cur = p.currencies.split(',')[0] %}
+        <label class="product-choice"><input type="radio" name="product_id" value="{{ p.id }}" {% if product and product.id == p.id %}checked{% endif %} data-autosubmit>
+          <span><strong>{{ p.name }}</strong><small>{{ money(p.min_amount_minor, cur)[:-3] }} to {{ money(p.max_amount_minor, cur)[:-3] }} · {{ p.min_term_months }}–{{ p.max_term_months }} months</small>
+          {% if p.description %}<small>{{ p.description }}</small>{% endif %}</span></label>
+      {% endfor %}
+    </div>
+    {{ error(errors, 'product_id') }}
+    <noscript><button class="btn btn-outline btn-sm" type="submit" name="action" value="choose">Show this product's questions</button></noscript>
+    {% if product and product.required_docs %}<p class="hint">You'll be asked for: {% for d in product.required_docs.split(',') if d %}{{ DOC_TYPES.get(d, d) }}{{ ', ' if not loop.last }}{% endfor %}.</p>{% endif %}
+  </section>
+  {% endif %}
+
+  <section class="form-section">
+    <h2>Your business</h2>
+    <p>The basics needed to assess a business finance request.</p>
+    <div class="grid-fields">
+      {{ input('company_name', 'Business name', values, errors, required=true, autocomplete='organization', cls='full', maxlength=200) }}
+      {{ select('business_type', 'Business type', BUSINESS_TYPES, values, errors, required=true) }}
+      {{ input('company_number', 'Company registration number', values, errors, hint='Needed for limited companies and LLPs.', maxlength=30) }}
+      {{ input('industry', 'Industry', values, errors, required=true, hint='For example: engineering, hospitality, haulage.', maxlength=200) }}
+      {{ select('years_trading', 'Time trading', YEARS_TRADING, values, errors, required=true) }}
+      {{ input('annual_turnover', 'Annual turnover', values, errors, type='number', required=true) }}
+      {{ select('role_in_business', 'Your role in the business', ROLES_IN_BUSINESS, values, errors) }}
+      <div class="full">
+        <label for="address">Business address <span class="muted">*</span></label>
+        <textarea id="address" name="address" rows="3" maxlength="500" autocomplete="street-address" {% if errors.address %}aria-invalid="true" aria-describedby="address-error"{% endif %}>{{ values.get('address') or '' }}</textarea>
+        {{ error(errors, 'address') }}
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h2>The finance you need</h2>
+    <p>Your best estimate is fine.</p>
+    <div class="grid-fields">
+      {% if not products %}{{ select('finance_type', 'Type of finance', FINANCE_TYPES, values, errors, required=true) }}{% endif %}
+      {% set allowed = product.currencies.split(',') if product else CURRENCIES.keys()|list %}
+      <div><label for="currency">Currency</label><select id="currency" name="currency">{% for k in allowed %}<option value="{{ k }}" {% if (values.get('currency') or org().default_currency) == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select>{{ error(errors, 'currency') }}</div>
+      {{ input('amount', 'Amount', values, errors, type='number', required=true, hint=('Between %s and %s.'|format(money(product.min_amount_minor, allowed[0])[:-3], money(product.max_amount_minor, allowed[0])[:-3])) if product else 'Between 1,000 and 5,000,000.') }}
+      {{ input('term_months', 'Term (months)', values, errors, type='number', required=true, hint=('%s to %s months.'|format(product.min_term_months, product.max_term_months)) if product else 'For example 36, 48 or 60.') }}
+      <div class="full">
+        <label for="purpose">What is the finance for? <span class="muted">*</span></label>
+        <textarea id="purpose" name="purpose" rows="5" maxlength="2000" {% if errors.purpose %}aria-invalid="true" aria-describedby="purpose-error"{% endif %}>{{ values.get('purpose') or '' }}</textarea>
+        {{ error(errors, 'purpose') }}
+      </div>
+    </div>
+  </section>
+
+  {% if fields %}
+  <section class="form-section">
+    <h2>About this product</h2>
+    <div class="grid-fields">
+      {% for f in fields %}{% set name = 'x_' ~ f.key %}{% set val = extra.get(f.key, values.get(name, '')) %}
+        <div class="{{ 'full' if f.type == 'text' else '' }}">
+          <label for="{{ name }}">{{ f.label }}{% if f.required %} <span class="muted">*</span>{% endif %}</label>
+          {% if f.type == 'select' %}<select id="{{ name }}" name="{{ name }}"><option value="">Choose…</option>{% for o in f.options or [] %}<option value="{{ o }}" {% if val == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+          {% elif f.type == 'yesno' %}<select id="{{ name }}" name="{{ name }}"><option value="">Choose…</option><option value="yes" {% if val == 'yes' %}selected{% endif %}>Yes</option><option value="no" {% if val == 'no' %}selected{% endif %}>No</option></select>
+          {% else %}<input id="{{ name }}" name="{{ name }}" value="{{ val }}" maxlength="500" {% if f.type == 'number' %}inputmode="numeric"{% endif %}>{% endif %}
+          {{ error(errors, name) }}
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="form-section">
+    <h2>Documents</h2>
+    <p>After you submit, you can upload documents on your application page. Files are checked, stored privately and only seen by you and authorised staff.</p>
+  </section>
+
+  <section class="form-section">
+    <h2>Consent</h2>
+    <label class="check"><input type="checkbox" name="consent" value="1" {% if values.get('consent') %}checked{% endif %}>
+      I confirm the information is accurate, and I consent to {{ site().show('legal_name') }} using it, and sharing it where needed, to assess this application, including checks which may include a credit search.</label>
+    {{ error(errors, 'consent') }}
+    <p class="hint">Submitting is not a commitment to take finance, and is not a decision. Any offer is explained in writing before you agree to anything. No fee is ever needed to get a decision or receive funds.</p>
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn-outline" type="submit" name="action" value="save">Save draft</button>
+    <button class="btn btn-primary" type="submit" name="action" value="submit">Submit application</button>
+  </div>
+</form>
+
+{% if app and app.status == 'draft' %}
+<form method="post" action="{{ url_for('client.delete_draft', app_id=app.id) }}" class="small right-actions" data-confirm="Delete this draft? This cannot be undone.">
+  {{ csrf() }}
+  <button class="btn btn-danger btn-sm" type="submit">Delete draft</button>
+</form>
+{% endif %}
+{% endblock %}

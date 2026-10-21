@@ -1,0 +1,10 @@
+Hello {{ (client or user).full_name.split(' ')[0] }},
+
+{{ title }} is ready in your client portal for application {{ app.id|ref }}:
+{{ base_url }}/account/applications/{{ app.id }}#letters
+
+If it is an agreement, it is not binding until it has been signed.
+
+For your security we never ask for passwords, codes or bank details by email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

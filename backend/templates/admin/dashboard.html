@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Staff overview{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Overview</h1><p>{{ org().name }} · signed in as {{ current_user().full_name }} ({{ STAFF_ROLES[current_user().role] }}).</p></div>
+  <a class="btn btn-primary" href="{{ url_for('admin.applications', attention=1) }}">Needs attention</a>
+</div>
+{% if usage %}<p class="notice">{{ usage }}</p>{% endif %}
+{% if stats.failed_mail and can('view_audit') %}<p class="notice error"><a href="{{ url_for('admin.email_log', status='failed') }}">{{ stats.failed_mail }} email{{ '' if stats.failed_mail == 1 else 's' }} failed to send.</a> Check the email settings.</p>{% endif %}
+<div class="tiles">
+  <a class="tile" href="{{ url_for('admin.applications', status='submitted') }}"><strong>{{ counts.get('submitted', 0) }}</strong><span>New, waiting for review</span></a>
+  <a class="tile" href="{{ url_for('documents.queue') }}"><strong>{{ stats.docs_waiting }}</strong><span>Documents awaiting verification</span></a>
+  <a class="tile" href="{{ url_for('admin.approvals') }}"><strong>{{ stats.decisions_waiting }}</strong><span>Decisions waiting to be issued</span></a>
+  <a class="tile" href="{{ url_for('finance.disbursements', status='pending') }}"><strong>{{ stats.payments_waiting }}</strong><span>Payments awaiting confirmation</span></a>
+</div>
+<div class="layout-2">
+  <section>
+    <h2 class="section-title">Needs attention</h2>
+    {% if attention %}
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Application</th><th>Status</th><th>Updated</th></tr></thead>
+      <tbody>{% for a in attention %}
+        <tr><td><a href="{{ url_for('admin.application', app_id=a.id) }}">{{ a.company_name or 'Untitled' }}</a><span class="sub">{{ a.id|ref }} · {{ a.full_name }}</span></td><td>{{ badge(a.status) }}</td><td class="muted small">{{ a.updated_at|date }}</td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}<div class="panel empty"><p>Nothing waiting. New applications, customer messages, unreviewed documents, proposed decisions and unconfirmed payments appear here.</p></div>{% endif %}
+    <h2 class="section-title">Recent activity</h2>
+    {% if recent %}
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Application</th><th>Requested</th><th>Status</th><th>Updated</th></tr></thead>
+      <tbody>{% for a in recent %}
+        <tr><td><a href="{{ url_for('admin.application', app_id=a.id) }}">{{ a.company_name or 'Untitled' }}</a><span class="sub">{{ a.id|ref }} · {{ a.full_name }}</span></td>
+          <td>{{ money((a.amount or 0) * 100, a.currency) }}</td><td>{{ badge(a.status) }}</td><td class="muted small">{{ a.updated_at|date }}</td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}<div class="panel empty"><p>No submitted applications yet.</p></div>{% endif %}
+  </section>
+  <section class="panel">
+    <h2>Pipeline</h2>
+    <dl class="facts">
+      {% for key, label in STATUSES.items() if key != 'draft' and counts.get(key) %}
+        <dt><a href="{{ url_for('admin.applications', status=key) }}">{{ label }}</a></dt><dd>{{ counts.get(key, 0) }}</dd>
+      {% endfor %}
+      <dt>Customer drafts (private)</dt><dd>{{ counts.get('draft', 0) }}</dd>
+      <dt><a href="{{ url_for('admin.clients') }}">Registered customers</a></dt><dd>{{ stats.clients }}</dd>
+      <dt><a href="{{ url_for('admin.enquiries') }}">Open enquiries</a></dt><dd>{{ stats.open_enquiries }}</dd>
+    </dl>
+  </section>
+</div>
+{% endblock %}

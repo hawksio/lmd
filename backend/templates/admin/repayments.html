@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Repayments{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Repayments</h1><p>Active loans, calculated from the repayment schedules and confirmed payments.</p></div></div>
+{% if rows %}
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Loan</th><th>Outstanding principal</th><th>Repaid</th><th>Next due</th><th>Overdue</th></tr></thead>
+  <tbody>{% for r in rows %}{% set p = r.pos %}
+    <tr><td><a href="{{ url_for('admin.application', app_id=r.application_id) }}#repayments">{{ r.company_name }}</a><span class="sub">{{ r.application_id|ref }} · {{ r.full_name }}</span></td>
+      <td>{{ money(p.outstanding_principal, r.currency) }}</td><td>{{ money(p.repaid, r.currency) }}</td>
+      <td class="small">{% if p.next_due %}{{ money(p.next_due.unpaid_minor, r.currency) }} on {{ p.next_due.due_date }}{% else %}Fully repaid{% endif %}</td>
+      <td>{% if p.overdue_count %}<span class="tag-sm tag-rejected">{{ p.overdue_count }} · {{ money(p.overdue_minor, r.currency) }}</span>{% else %}–{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div>
+{% else %}<div class="panel empty"><p>No active repayment schedules.</p></div>{% endif %}
+<section class="panel spaced">
+  <h2>Latest payments received</h2>
+  <ul class="doc-list">{% for r in recent %}<li><span><a href="{{ url_for('admin.application', app_id=r.application_id) }}#repayments">{{ r.company_name }}</a><small class="block">{{ r.received_on }} · ref {{ r.provider_reference }}</small></span><span>{{ money(r.amount_minor, r.currency) }} <span class="tag-sm tag-{{ 'verified' if r.status == 'confirmed' else 'rejected' }}">{{ r.status }}</span></span></li>{% else %}<li class="muted">None yet.</li>{% endfor %}</ul>
+</section>
+{% endblock %}

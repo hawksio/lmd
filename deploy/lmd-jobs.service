@@ -1,0 +1,10 @@
+# /etc/systemd/system/lmd-jobs.service — scheduled campaign sends (no-op unless marketing is enabled)
+[Unit]
+Description=LMD Finance scheduled jobs
+
+[Service]
+Type=oneshot
+User=lmd
+WorkingDirectory=/srv/lmd/app
+EnvironmentFile=/etc/lmd/lmd.env
+ExecStart=/srv/lmd/app/.venv/bin/flask --app backend send-campaigns

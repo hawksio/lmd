@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Plans{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Plans</h1><p>Subscription plans organisations can be put on. Names, prices and limits are yours to set.</p></div></div>
+{% if errors %}<p class="notice error">{% for k, v in errors.items() %}{{ v }} {% endfor %}</p>{% endif %}
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Plan</th><th>Price</th><th>Limits</th><th>Usage fee</th><th>Subscribers</th><th>Status</th></tr></thead>
+  <tbody>{% for p in rows %}
+    <tr><td><strong>{{ p.name }}</strong><span class="sub">{{ p.code }}{% if p.trial_days %} · {{ p.trial_days }}-day trial{% endif %}</span></td>
+      <td>{{ money(p.price_minor, p.currency) }} / {{ p.billing_period }}</td>
+      <td class="small">Staff {{ p.max_staff or '∞' }} · applications/month {{ p.max_applications_month or '∞' }} · products {{ p.max_products or '∞' }}</td>
+      <td>{{ p.platform_fee_percent }}%</td><td>{{ p.subs }}</td><td>{{ 'Active' if p.active else 'Hidden' }}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">No plans yet. Create e.g. Starter, Professional and Enterprise below.</td></tr>{% endfor %}</tbody></table></div>
+<section class="panel spaced">
+  <h2>Add or update a plan</h2>
+  <p class="hint">Use an existing plan's number to update it (existing invoices never change).</p>
+  <form method="post" class="form grid-fields" novalidate>
+    {{ csrf() }}
+    <div><label for="id">Plan number to update (optional)</label><select id="id" name="id"><option value="">New plan</option>{% for p in rows %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></div>
+    <div><label for="code">Code</label><input id="code" name="code" maxlength="30" placeholder="starter"></div>
+    <div><label for="name">Name</label><input id="name" name="name" maxlength="80"></div>
+    <div><label for="price">Price</label><input id="price" name="price" inputmode="decimal" placeholder="0.00"></div>
+    <div><label for="currency">Currency</label><select id="currency" name="currency">{% for k in CURRENCIES %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select></div>
+    <div><label for="billing_period">Billing period</label><select id="billing_period" name="billing_period"><option value="month">Monthly</option><option value="year">Yearly</option></select></div>
+    <div><label for="trial_days">Trial days</label><input id="trial_days" name="trial_days" inputmode="numeric" value="0"></div>
+    <div><label for="max_staff">Max staff (empty = unlimited)</label><input id="max_staff" name="max_staff" inputmode="numeric"></div>
+    <div><label for="max_applications_month">Max applications a month</label><input id="max_applications_month" name="max_applications_month" inputmode="numeric"></div>
+    <div><label for="max_products">Max loan products</label><input id="max_products" name="max_products" inputmode="numeric"></div>
+    <div><label for="platform_fee_percent">Usage fee (% of confirmed disbursements, max 10)</label><input id="platform_fee_percent" name="platform_fee_percent" inputmode="decimal" value="0"></div>
+    <div class="full"><label for="description">Description</label><input id="description" name="description" maxlength="500"></div>
+    <div class="full"><label for="features">Included features (shown on invoices and to you)</label><input id="features" name="features" maxlength="1000"></div>
+    <label class="check full"><input type="checkbox" name="active" value="1" checked> Available for new subscriptions</label>
+    <div><button class="btn btn-primary btn-sm" type="submit">Save plan</button></div>
+  </form>
+</section>
+{% endblock %}

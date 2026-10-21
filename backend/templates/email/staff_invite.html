@@ -1,0 +1,7 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}Set up your LMD Finance staff account.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ user.full_name.split(' ')[0] }},</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">Your staff account</h1><p style="margin:0 0 16px;">An administrator has created an LMD Finance staff account for you with the role <strong>{{ role }}</strong>. Choose your password using the link below. It works once and expires in 24 hours.</p>{{ button(link, 'Choose a password') }}<p style="margin:0;color:#56676A;font-size:14px;">After signing in, turn on two-step verification under Account and security. If you weren't expecting this, tell your administrator.</p>
+{% endblock %}
+{% block footer %}Staff notification. Sent to the LMD Finance team.{% endblock %}

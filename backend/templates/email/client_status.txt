@@ -1,0 +1,15 @@
+{% from "email/_status_copy.html" import explain %}Hello {{ client.full_name.split(' ')[0] }},
+
+Your application {{ app.id|ref }} ({{ app.company_name }}) is now: {{ status_label }}
+
+{{ explain(app.status) }}
+{% if message %}
+Message from your adviser:
+{{ message }}
+{% endif %}
+View your application: {{ base_url }}/account/applications/{{ app.id }}
+
+For your security we never ask for passwords or bank details by email.
+If anything looks unusual, contact us using the details on our website.
+
+LMD Finance Ltd

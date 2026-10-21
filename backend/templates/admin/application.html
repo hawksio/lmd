@@ -1,0 +1,401 @@
+﻿{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, review_badge, fee_badge, financing, breakdown, error %}
+{% block title %}{{ app.id|ref }} · Staff{% endblock %}
+{% block content %}
+{% set c = app.currency %}
+<a class="crumb" href="{{ url_for('admin.applications') }}">Applications</a>
+<div class="page-head">
+  <div>
+    <h1>{{ app.company_name or 'Untitled application' }}</h1>
+    <p>{{ app.id|ref }} · {{ product.name if product else 'No product chosen' }} · Submitted {{ app.submitted_at|date or 'not yet' }} · Updated {{ app.updated_at|date }}</p>
+  </div>
+  {{ badge(app.status) }}
+</div>
+
+<nav class="tabs-nav" aria-label="Sections">
+  <a href="#summary">Summary</a><a href="#documents">Documents</a><a href="#decision">Decision</a><a href="#letters">Letters</a>
+  <a href="#payments">Disbursements</a><a href="#repayments">Repayments</a><a href="#fees">Fees</a><a href="#notes">Messages</a>
+</nav>
+
+<div class="layout-2">
+  <div>
+    <section class="panel" id="summary">
+      <h2>Application</h2>
+      <div class="kpis">
+        <div><span>Requested</span><strong>{{ money((app.amount or 0) * 100, c) }}</strong></div>
+        <div><span>Term</span><strong>{{ app.term_months or '–' }} months</strong></div>
+        <div><span>Approved</span><strong>{{ money(summary.approved, c) if summary.approved else '–' }}</strong></div>
+        <div><span>Disbursed</span><strong>{{ money(summary.disbursed, c) }}</strong></div>
+      </div>
+      <dl class="facts">
+        <dt>Purpose</dt><dd class="pre">{{ app.purpose }}</dd>
+        <dt>Business</dt><dd>{{ BUSINESS_TYPES.get(app.business_type, '') }}{% if app.company_number %} · {{ app.company_number }}{% endif %}</dd>
+        <dt>Industry</dt><dd>{{ app.industry }}</dd>
+        <dt>Time trading</dt><dd>{{ YEARS_TRADING.get(app.years_trading, '') }}</dd>
+        <dt>Annual turnover</dt><dd>{{ money((app.annual_turnover or 0) * 100, c) }}</dd>
+        <dt>Address</dt><dd class="pre">{{ app.address }}</dd>
+        <dt>Applicant's role</dt><dd>{{ ROLES_IN_BUSINESS.get(app.role_in_business, 'Not given') }}</dd>
+        {% for f in extra_fields %}<dt>{{ f.label }}</dt><dd>{{ extra.get(f.key, '') or '–' }}</dd>{% endfor %}
+        <dt>Consent to checks</dt><dd>{{ 'Yes' if app.consent else 'No' }}</dd>
+      </dl>
+      {% if product %}
+      <h3 class="small-h">Eligibility and risk information</h3>
+      <ul class="plain-list">
+        <li>Amount within product range ({{ money(product.min_amount_minor, c) }}–{{ money(product.max_amount_minor, c) }}): <strong>{{ 'yes' if product.min_amount_minor <= (app.amount or 0) * 100 <= product.max_amount_minor else 'no' }}</strong></li>
+        <li>Term within range ({{ product.min_term_months }}–{{ product.max_term_months }} months): <strong>{{ 'yes' if product.min_term_months <= (app.term_months or 0) <= product.max_term_months else 'no' }}</strong></li>
+        {% if app.annual_turnover %}<li>Requested amount as a share of annual turnover: <strong>{{ ((app.amount or 0) * 100 / app.annual_turnover)|round(1) }}%</strong></li>{% endif %}
+        {% if product.eligibility %}<li class="pre">Product eligibility: {{ product.eligibility }}</li>{% endif %}
+      </ul>
+      <p class="hint">Information only. The software does not score or decide applications.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="documents">
+      <h2>Documents and verification</h2>
+      {% if requirements %}
+      <h3 class="small-h">Requirements {% if outstanding %}<span class="tag-sm tag-replacement_required">{{ outstanding|length }} outstanding</span>{% else %}<span class="tag-sm tag-verified">all verified</span>{% endif %}</h3>
+      <ul class="doc-list">
+        {% for r in requirements %}
+          <li><span><strong>{{ r.label }}</strong>{% if r.request_note %}<small class="block">Requested: {{ r.request_note }}</small>{% endif %}</span>
+            <span class="doc-actions">{{ review_badge(r.status) }}{% if r.document %}<a class="btn btn-outline btn-sm" href="{{ url_for('documents.review', doc_id=r.document.id) }}">Review</a>{% endif %}</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <h3 class="small-h">All uploads</h3>
+      <ul class="doc-list">
+        {% for d in docs %}
+          <li class="doc-row"><span>
+            {% if can('view_documents') %}<a href="{{ url_for('admin.download_document', doc_id=d.id) }}">{{ d.original_name }}</a>{% else %}{{ d.original_name }}{% endif %}
+            <small class="block">{{ DOC_TYPES.get(d.doc_type, 'Other') }} · {{ (d.size_bytes / 1024)|round|int }} KB · {{ d.created_at|date }} · {{ 'customer' if d.uploader_role == 'client' else 'staff' }} upload{% if d.reviewer_name %} · reviewed by {{ d.reviewer_name }}{% endif %}</small></span>
+            <span class="doc-actions">{{ review_badge(d.review_status) }}<a class="btn btn-outline btn-sm" href="{{ url_for('documents.review', doc_id=d.id) }}">Open</a></span></li>
+        {% else %}<li class="muted">No documents yet.</li>{% endfor %}
+      </ul>
+      {% if can('review_documents') %}
+      <details class="inline-details"><summary>Request a document or more evidence</summary>
+        <form method="post" action="{{ url_for('documents.request_document', app_id=app.id) }}" class="form">
+          {{ csrf() }}
+          <div><label for="rq_type">Document type</label><select id="rq_type" name="doc_type">{% for k, v in DOC_TYPES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+          <div><label for="rq_note">What is needed (shown to the customer)</label><textarea id="rq_note" name="note" rows="2" maxlength="1000" required></textarea></div>
+          <div><button class="btn btn-dark btn-sm" type="submit">Send request</button></div>
+        </form>
+      </details>
+      {% endif %}
+      {% for r in doc_requests if r.status == 'open' %}
+        {% if loop.first %}<h3 class="small-h">Open requests</h3><ul class="plain-list">{% endif %}
+        <li>{{ DOC_TYPES.get(r.doc_type) }}: {{ r.note }} <small class="muted">({{ r.full_name }}, {{ r.created_at|date }})</small>
+          {% if can('review_documents') %}<form method="post" action="{{ url_for('documents.cancel_request', rid=r.id) }}" class="inline">{{ csrf() }}<button class="link-btn" type="submit">Cancel</button></form>{% endif %}</li>
+        {% if loop.last %}</ul>{% endif %}
+      {% endfor %}
+      {% if can('upload_documents') %}
+      <form method="post" action="{{ url_for('admin.upload_document', app_id=app.id) }}" enctype="multipart/form-data" class="upload spaced" data-once>
+        {{ csrf() }}
+        <div><label for="doc_type">Type</label><select id="doc_type" name="doc_type">{% for k, v in DOC_TYPES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+        <div><label for="document">Add a document (staff)</label><input id="document" name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required></div>
+        <button class="btn btn-dark btn-sm" type="submit">Upload</button>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="decision">
+      <h2>Approval decision</h2>
+      {% if decision %}
+        <p><span class="tag-sm tag-verified">Issued</span> Revision {{ decision.revision }} · {{ {'full': 'Full approval', 'partial': 'Partial approval', 'conditional': 'Conditional approval'}[decision.decision_type] }}
+          · issued {{ decision.issued_at|date }}{% if accepted %} · <strong>accepted by the customer {{ accepted.accepted_at|date }}</strong>{% else %} · not yet accepted by the customer{% endif %}</p>
+        {% if conditions %}
+          <h3 class="small-h">Conditions</h3>
+          <ul class="doc-list">{% for cd in conditions %}
+            <li><span>{{ cd.text }}</span><span class="doc-actions"><span class="tag-sm tag-{{ 'verified' if cd.status != 'outstanding' else 'submitted' }}">{{ cd.status|capitalize }}</span>
+              {% if can('propose_decisions') %}<form method="post" action="{{ url_for('underwriting.update_condition', cid=cd.id) }}" class="mini-form">{{ csrf() }}
+                <select name="status" aria-label="Condition status">{% for s in ['outstanding', 'satisfied', 'waived'] %}<option value="{{ s }}" {% if cd.status == s %}selected{% endif %}>{{ s|capitalize }}</option>{% endfor %}</select>
+                <button class="btn btn-outline btn-sm" type="submit">Save</button></form>{% endif %}</span></li>
+          {% endfor %}</ul>
+        {% endif %}
+        <details class="inline-details"><summary>Figures shown to the customer</summary>{{ breakdown(decision.pricing_data) }}</details>
+      {% endif %}
+
+      {% for d in decisions if d.status == 'proposed' %}
+        <div class="terms-card pending">
+          <p><span class="tag-sm tag-submitted">Proposed</span> Revision {{ d.revision }} by {{ d.proposer }} {{ d.proposed_at|date }}
+            {% if d.needs_second_approval %} · <strong>needs a second authorised person to issue</strong>{% endif %}</p>
+          <p>{{ {'full': 'Full approval', 'partial': 'Partial approval', 'conditional': 'Conditional approval'}[d.decision_type] }}:
+            <strong>{{ money(d.approved_minor, d.currency) }}</strong> of {{ money(d.requested_minor, d.currency) }} requested
+            {% if d.previous_approved_minor %}(previously {{ money(d.previous_approved_minor, d.currency) }}){% endif %}, {{ d.term_months }} months.</p>
+          <p class="small pre">Basis: {{ d.reason }}{% if d.internal_note %}
+Internal note: {{ d.internal_note }}{% endif %}</p>
+          {{ breakdown(d.pricing_data) }}
+          {% if can('issue_decisions') %}
+            {% if d.needs_second_approval and d.proposed_by == me %}
+              <p class="muted small">Waiting for a different authorised person to review and issue this decision.</p>
+            {% else %}
+              <form method="post" action="{{ url_for('underwriting.issue', did=d.id) }}" class="mini-form">{{ csrf() }}
+                <label class="check"><input type="checkbox" name="confirm" value="1"> I have reviewed this decision and its figures</label>
+                <button class="btn btn-primary btn-sm" type="submit">Issue decision to customer</button></form>
+            {% endif %}
+          {% endif %}
+          {% if can('propose_decisions') %}<form method="post" action="{{ url_for('underwriting.withdraw_proposal', did=d.id) }}" class="mini-form">{{ csrf() }}<button class="btn btn-danger btn-sm" type="submit">Withdraw proposal</button></form>{% endif %}
+        </div>
+      {% endfor %}
+
+      {% if can('propose_decisions') and can_decide %}
+      <details class="inline-details" {% if decision_form or not decision %}open{% endif %}><summary>{{ 'Revise the decision' if decision else 'Propose a decision' }}</summary>
+        {% if outstanding and settings.require_verified_documents_for_underwriting %}<p class="notice small">{{ outstanding|length }} required document(s) not yet verified. Your organisation requires verification before a decision.</p>{% endif %}
+        {% if decision_errors.pricing %}<p class="notice error">{{ decision_errors.pricing }}</p>{% endif %}
+        <form method="post" action="{{ url_for('underwriting.propose', app_id=app.id) }}" class="form grid-fields" novalidate>
+          {{ csrf() }}
+          <div><label for="product_id">Loan product</label>
+            <select id="product_id" name="product_id">{% for p in products %}<option value="{{ p.id }}" {% if (decision_form.get('product_id') or app.product_id) == p.id %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select>
+            {{ error(decision_errors, 'product_id') }}</div>
+          <div><label for="decision_type">Decision</label>
+            <select id="decision_type" name="decision_type">{% for k, v in [('full', 'Full approval'), ('partial', 'Partial approval'), ('conditional', 'Conditional approval')] %}<option value="{{ k }}" {% if decision_form.get('decision_type') == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select>
+            {{ error(decision_errors, 'decision_type') }}</div>
+          <div><label for="approved_amount">Approved amount ({{ c }})</label>
+            <input id="approved_amount" name="approved_amount" inputmode="decimal" value="{{ decision_form.get('approved_amount', '') }}" {% if decision_errors.approved_amount %}aria-invalid="true"{% endif %}>
+            <p class="hint">Requested: {{ money((app.amount or 0) * 100, c) }}</p>{{ error(decision_errors, 'approved_amount') }}</div>
+          <div><label for="term_months">Term (months)</label>
+            <input id="term_months" name="term_months" inputmode="numeric" value="{{ decision_form.get('term_months') or app.term_months or '' }}">{{ error(decision_errors, 'term_months') }}</div>
+          <div class="full"><label for="conditions">Conditions (one per line; shown to the customer)</label>
+            <textarea id="conditions" name="conditions" rows="3" maxlength="3000">{{ (decision_form.get('conditions') or [])|join('\n') }}</textarea>{{ error(decision_errors, 'conditions') }}</div>
+          <div class="full"><label for="reason">Basis for the decision (internal record)</label>
+            <textarea id="reason" name="reason" rows="2" maxlength="2000">{{ decision_form.get('reason', '') }}</textarea>{{ error(decision_errors, 'reason') }}</div>
+          <div class="full"><label for="internal_note">Internal note (optional)</label><textarea id="internal_note" name="internal_note" rows="2" maxlength="2000">{{ decision_form.get('internal_note', '') }}</textarea></div>
+          <p class="hint full">Approvals of {{ money(threshold, c) }} or more need a second authorised person to issue them. Interest and fees come from Financial settings and are frozen on the decision.</p>
+          <div class="full inline-actions"><button class="btn btn-outline btn-sm" type="submit" name="action" value="preview">Preview calculation</button>
+            <button class="btn btn-primary btn-sm" type="submit" name="action" value="propose">Propose decision</button></div>
+        </form>
+        {% if preview %}<div class="terms-card"><h3 class="small-h">Preview (not saved)</h3>{{ breakdown(preview) }}</div>{% endif %}
+      </details>
+      {% endif %}
+
+      {% set older = decisions|rejectattr('status', 'equalto', 'proposed')|list %}
+      {% if older|length > 1 or (older and not decision) %}
+      <details class="inline-details"><summary>Decision history ({{ older|length }})</summary>
+        <ul class="plain-list">{% for d in older %}<li>Rev {{ d.revision }} · {{ d.status }} · {{ money(d.approved_minor, d.currency) }}{% if d.previous_approved_minor %} (was {{ money(d.previous_approved_minor, d.currency) }}){% endif %} · proposed by {{ d.proposer }} {{ d.proposed_at|date }}{% if d.issuer %} · issued by {{ d.issuer }} {{ d.issued_at|date }}{% endif %}</li>{% endfor %}</ul>
+      </details>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="letters">
+      <h2>Agreements and letters</h2>
+      {% if not settings.agreement_template_approved %}<p class="notice small">Your organisation has not confirmed that its agreement template is legally approved, so agreements can be drafted for review but not issued.</p>{% endif %}
+      <ul class="doc-list">
+        {% for gd in generated %}
+          <li><span>{% if can('view_documents') %}<a href="{{ url_for('admin.download_letter', doc_id=gd.id) }}">{{ gd.title }}</a>{% else %}{{ gd.title }}{% endif %}
+            <small class="block">Generated by {{ gd.generated_by_name }} {{ gd.generated_at|date }}{% if gd.issued_at %} · issued by {{ gd.issued_by_name }} {{ gd.issued_at|date }}{% endif %}</small></span>
+            <span class="doc-actions"><span class="tag-sm tag-{{ 'verified' if gd.status == 'issued' else ('submitted' if gd.status == 'draft' else 'rejected') }}">{{ gd.status|capitalize }}</span>
+            {% if gd.status == 'draft' and can('issue_documents') and (gd.kind != 'agreement' or settings.agreement_template_approved) %}
+              <form method="post" action="{{ url_for('admin.issue_letter', doc_id=gd.id) }}" class="mini-form">{{ csrf() }}
+                <label class="check"><input type="checkbox" name="confirm" value="1"> Checked</label>
+                <button class="btn btn-primary btn-sm" type="submit">Issue to customer</button></form>
+            {% endif %}</span></li>
+        {% else %}<li class="muted">None yet.</li>{% endfor %}
+      </ul>
+      {% if can('generate_documents') %}
+      <form method="post" action="{{ url_for('admin.generate_letter', app_id=app.id) }}" class="form">
+        {{ csrf() }}
+        <div><label for="kind">Prepare a draft</label>
+          <select id="kind" name="kind">{% for k, v in LETTER_KINDS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+        <div><label for="letter-body">Text (information requests and decline letters)</label><textarea id="letter-body" name="body" rows="3" maxlength="4000"></textarea></div>
+        <div><button class="btn btn-dark btn-sm" type="submit">Generate draft PDF</button></div>
+      </form>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="payments">
+      <h2>Disbursements</h2>
+      <p class="muted small">Records of real payments only. Schedule, then mark as paid with the bank reference once it has left the bank, then a different authorised person confirms it. Only confirmed payments count as disbursed.</p>
+      {% for p in payments %}
+        <div class="terms-card {{ p.status }}">
+          <p><span class="tag-sm tag-{{ {'confirmed': 'verified', 'pending': 'under_review', 'scheduled': 'submitted'}.get(p.status, 'rejected') }}">{{ p.status|capitalize }}</span>
+            {{ money(p.amount_pence, p.currency) }}{% if p.fees_deducted_minor %} (customer receives {{ money(p.amount_pence - p.fees_deducted_minor, p.currency) }} after fees){% endif %}
+            {% if p.scheduled_for %} · planned {{ p.scheduled_for }}{% endif %}{% if p.paid_on %} · paid {{ p.paid_on }} by {{ PAYMENT_METHODS.get(p.method, p.method) }}, ref {{ p.payment_reference }}{% endif %}</p>
+          <p class="small muted">Recorded by {{ p.recorded_name }}{% if p.confirmed_name %} · confirmed by {{ p.confirmed_name }} {{ p.confirmed_at|date }} ({{ CONFIRMATION_SOURCES.get(p.confirmation_source, '') }}){% endif %}{% if p.reversal_reason %} · {{ p.reversal_reason }}{% endif %}</p>
+          {% if p.status == 'scheduled' and can('record_disbursement') %}
+            <form method="post" action="{{ url_for('finance.mark_paid', did=p.id) }}" class="mini-form">{{ csrf() }}
+              <label class="sr" for="po{{ p.id }}">Date paid</label><input id="po{{ p.id }}" name="paid_on" type="date" required>
+              <label class="sr" for="pm{{ p.id }}">Method</label><select id="pm{{ p.id }}" name="method">{% for k, v in PAYMENT_METHODS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+              <label class="sr" for="pr{{ p.id }}">Bank reference</label><input id="pr{{ p.id }}" name="payment_reference" placeholder="Bank reference" maxlength="120" required>
+              <button class="btn btn-dark btn-sm" type="submit">Record as paid</button></form>
+            <form method="post" action="{{ url_for('finance.change_disbursement', did=p.id, action='cancel') }}" class="mini-form">{{ csrf() }}<button class="btn btn-danger btn-sm" type="submit">Cancel</button></form>
+          {% elif p.status == 'pending' and can('confirm_disbursement') %}
+            {% if p.recorded_by != me %}
+            <form method="post" action="{{ url_for('finance.confirm_disbursement', did=p.id) }}" class="mini-form">{{ csrf() }}
+              <select name="confirmation_source" aria-label="How was it checked">{% for k, v in CONFIRMATION_SOURCES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+              <label class="check"><input type="checkbox" name="bank_checked" value="1"> I have checked this payment</label>
+              <button class="btn btn-primary btn-sm" type="submit">Confirm payment</button></form>
+            <form method="post" action="{{ url_for('finance.change_disbursement', did=p.id, action='reject') }}" class="mini-form">{{ csrf() }}<input name="reason" placeholder="Reason" aria-label="Reason"><button class="btn btn-danger btn-sm" type="submit">Reject record</button></form>
+            {% else %}<p class="muted small">Waiting for a different authorised person to confirm.</p>{% endif %}
+          {% elif p.status == 'confirmed' and can('record_disbursement') %}
+            <details><summary class="small">Reverse this payment record</summary>
+              <form method="post" action="{{ url_for('finance.change_disbursement', did=p.id, action='reverse') }}" class="mini-form">{{ csrf() }}
+                <input name="reason" placeholder="Reason" aria-label="Reason" required><label class="check"><input type="checkbox" name="confirm" value="1"> Confirm reversal</label>
+                <button class="btn btn-danger btn-sm" type="submit">Reverse</button></form></details>
+          {% endif %}
+        </div>
+      {% endfor %}
+      {% if can('record_disbursement') and app.status in ('agreement_signed', 'funding_scheduled', 'partially_disbursed') %}
+      <form method="post" action="{{ url_for('finance.schedule_disbursement', app_id=app.id) }}" class="form grid-fields">
+        {{ csrf() }}
+        <div><label for="d_amount">Amount to release ({{ c }})</label><input id="d_amount" name="amount" inputmode="decimal" required>
+          <p class="hint">Approved {{ money(summary.approved or 0, c) }}; already scheduled or paid {{ money(summary.scheduled + summary.disbursed, c) }}.</p></div>
+        <div><label for="d_date">Planned payment date</label><input id="d_date" name="scheduled_for" type="date" required></div>
+        <div class="full"><label for="d_note">Note</label><input id="d_note" name="note" maxlength="500"></div>
+        <div><button class="btn btn-dark btn-sm" type="submit">Schedule payment</button></div>
+      </form>
+      {% elif not payments %}<p class="muted small">Available once the agreement has been signed.</p>{% endif %}
+    </section>
+
+    <section class="panel" id="repayments">
+      <h2>Repayments</h2>
+      {% if position %}
+        <div class="kpis">
+          <div><span>Outstanding principal</span><strong>{{ money(position.outstanding_principal, c) }}</strong></div>
+          <div><span>Repaid</span><strong>{{ money(position.repaid, c) }}</strong></div>
+          <div><span>Overdue</span><strong>{{ money(position.overdue_minor, c) }}</strong></div>
+          <div><span>Next due</span><strong>{{ position.next_due.due_date if position.next_due else 'None' }}</strong></div>
+        </div>
+        <div class="table-wrap"><table class="data compact">
+          <thead><tr><th>No.</th><th>Due</th><th>Amount</th><th>Paid</th><th>State</th><th></th></tr></thead>
+          <tbody>{% for i in position.instalments %}<tr><td>{{ i.number }}</td><td>{{ i.due_date }}</td><td>{{ money(i.amount_minor, c) }}</td><td>{{ money(i.paid_minor, c) }}</td>
+            <td><span class="tag-sm tag-inst-{{ i.state }}">{{ i.state|replace('_', ' ')|capitalize }}</span></td>
+            <td>{% if i.state == 'overdue' and can('manage_fees') %}<form method="post" action="{{ url_for('finance.late_charge', iid=i.id) }}" class="inline" data-confirm="Apply the configured late charge to instalment {{ i.number }}?">{{ csrf() }}<button class="link-btn" type="submit">Apply late charge</button></form>{% endif %}</td></tr>{% endfor %}</tbody>
+        </table></div>
+        {% if can('manage_repayments') %}
+        <form method="post" action="{{ url_for('finance.record_repayment', app_id=app.id) }}" class="form grid-fields spaced" data-once>
+          {{ csrf() }}
+          <div><label for="r_amount">Amount received ({{ c }})</label><input id="r_amount" name="amount" inputmode="decimal" required></div>
+          <div><label for="r_date">Date received</label><input id="r_date" name="received_on" type="date" required></div>
+          <div><label for="r_method">Method</label><select id="r_method" name="method">{% for k, v in PAYMENT_METHODS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+          <div><label for="r_ref">Payment reference (unique)</label><input id="r_ref" name="provider_reference" maxlength="120" required></div>
+          <div><label for="r_src">Confirmed by</label><select id="r_src" name="confirmation_source">{% for k, v in CONFIRMATION_SOURCES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+          <div><label for="r_note">Note</label><input id="r_note" name="note" maxlength="500"></div>
+          <div><button class="btn btn-dark btn-sm" type="submit">Record repayment</button></div>
+        </form>
+        {% endif %}
+      {% elif can('manage_repayments') and summary.disbursed %}
+        <form method="post" action="{{ url_for('finance.create_schedule', app_id=app.id) }}" class="form inline-form">
+          {{ csrf() }}
+          <div><label for="first_due">First payment due</label><input id="first_due" name="first_due_date" type="date" required></div>
+          <div><button class="btn btn-dark btn-sm" type="submit">Create repayment schedule</button></div>
+        </form>
+        <p class="hint">Uses the frozen terms of the issued decision and the principal actually paid out ({{ money(summary.disbursed, c) }}).</p>
+      {% else %}<p class="muted small">A schedule can be created after a payment to the customer is confirmed.</p>{% endif %}
+      {% if repayments %}
+      <h3 class="small-h">Payments received</h3>
+      <ul class="doc-list">{% for r in repayments %}
+        <li><span>{{ money(r.amount_minor, r.currency) }} on {{ r.received_on }} · {{ PAYMENT_METHODS.get(r.method) }} · ref {{ r.provider_reference }}<small class="block">Recorded by {{ r.full_name }}{% if r.reversal_reason %} · reversed: {{ r.reversal_reason }}{% endif %}</small></span>
+          <span class="doc-actions"><span class="tag-sm tag-{{ 'verified' if r.status == 'confirmed' else 'rejected' }}">{{ r.status|capitalize }}</span>
+          {% if r.status == 'confirmed' and can('manage_repayments') %}<details><summary class="small">Reverse</summary><form method="post" action="{{ url_for('finance.reverse_repayment', rid=r.id) }}" class="mini-form">{{ csrf() }}<input name="reason" placeholder="Reason" aria-label="Reason" required><label class="check"><input type="checkbox" name="confirm" value="1"> Confirm</label><button class="btn btn-danger btn-sm" type="submit">Reverse</button></form></details>{% endif %}</span></li>
+      {% endfor %}</ul>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="fees">
+      <h2>Fees</h2>
+      {% for f in fees %}
+        {% if loop.first %}<ul class="doc-list">{% endif %}
+        <li><span><strong>{{ f.name }}</strong> {{ money(f.amount_minor, f.currency) }}
+          <small class="block">{% if f.percent %}{{ f.percent }}% of {{ money(f.basis_minor, f.currency) }}{% else %}Fixed{% endif %} · {{ f.payable_when }}{% if f.status_reason %} · {{ f.status_reason }}{% endif %}{% if f.payment_reference %} · ref {{ f.payment_reference }}{% endif %}</small></span>
+          <span class="doc-actions">{{ fee_badge(f.status) }}
+          {% if can('manage_fees') and f.status in ('pending', 'paid') %}<details><summary class="small">Update</summary>
+            <form method="post" action="{{ url_for('finance.change_fee', fid=f.id, action='paid' if f.status == 'pending' else 'refund') }}" class="mini-form">{{ csrf() }}
+              {% if f.status == 'pending' and f.timing not in ('deducted_from_disbursement', 'added_to_loan', 'with_first_instalment') %}
+                <input name="payment_reference" placeholder="Payment reference" aria-label="Payment reference"><select name="confirmation_source" aria-label="Confirmed by">{% for k, v in CONFIRMATION_SOURCES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select><button class="btn btn-outline btn-sm" type="submit">Record payment</button>
+              {% elif f.status == 'paid' %}<input name="payment_reference" placeholder="Refund reference" aria-label="Refund reference"><input name="reason" placeholder="Reason" aria-label="Reason"><button class="btn btn-outline btn-sm" type="submit">Record refund</button>{% endif %}
+            </form>
+            {% if f.status == 'pending' %}<form method="post" action="{{ url_for('finance.change_fee', fid=f.id, action='waive') }}" class="mini-form">{{ csrf() }}<input name="reason" placeholder="Reason" aria-label="Reason"><button class="btn btn-outline btn-sm" type="submit">Waive</button></form>
+            <form method="post" action="{{ url_for('finance.change_fee', fid=f.id, action='cancel') }}" class="mini-form">{{ csrf() }}<input name="reason" placeholder="Reason" aria-label="Reason"><button class="btn btn-danger btn-sm" type="submit">Cancel</button></form>{% endif %}
+          </details>{% endif %}</span></li>
+        {% if loop.last %}</ul>{% endif %}
+      {% else %}<p class="muted small">Fee records are created from the issued decision when the agreement is signed.</p>{% endfor %}
+    </section>
+
+    <section class="panel" id="notes">
+      <h2>Messages and internal notes</h2>
+      <div class="thread">
+        {% for n in notes %}
+          <article class="msg {% if n.role != 'client' %}mine{% endif %} {% if not n.visible_to_client %}internal{% endif %}">
+            <header><strong>{{ n.full_name }}{% if not n.visible_to_client %} · internal note{% endif %}</strong><span>{{ n.created_at|date }}</span></header>
+            <p>{{ n.body }}</p>
+          </article>
+        {% else %}<p class="muted">No messages yet.</p>{% endfor %}
+      </div>
+      {% if can('message_client') or can('internal_note') %}
+      <form method="post" action="{{ url_for('admin.add_note', app_id=app.id) }}" class="form" data-once>
+        {{ csrf() }}
+        <div><label for="body">Write a message or note</label><textarea id="body" name="body" rows="3" required maxlength="4000"></textarea></div>
+        {% if can('message_client') %}<label class="check"><input type="checkbox" name="visible_to_client" value="1" checked> Send to the customer (untick for an internal note only staff can see)</label>{% endif %}
+        <div><button class="btn btn-primary btn-sm" type="submit">Save</button></div>
+      </form>
+      {% endif %}
+    </section>
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>Financing summary</h2>
+      {{ financing(summary) }}
+    </section>
+
+    {% if can('change_status') %}
+    <section class="panel">
+      <h2>Update status</h2>
+      {% if allowed %}
+      <form method="post" action="{{ url_for('admin.change_status', app_id=app.id) }}" class="form">
+        {{ csrf() }}
+        <div><label for="status">New status</label>
+          <select id="status" name="status">
+            <option value="{{ app.status }}">No change ({{ STATUSES[app.status] }})</option>
+            {% for key in allowed %}<option value="{{ key }}">{{ STATUSES[key] }}</option>{% endfor %}
+          </select></div>
+        <div><label for="reason">Reason / decision record (internal)</label>
+          <textarea id="reason" name="reason" rows="2" maxlength="2000" aria-describedby="reason-hint"></textarea>
+          <p class="hint" id="reason-hint">Required for: {% for k in NOTE_REQUIRED|sort %}{{ STATUSES[k] }}{{ ', ' if not loop.last }}{% endfor %}.</p></div>
+        <div><label for="message">Message to the customer (optional)</label>
+          <textarea id="message" name="message" rows="3" maxlength="4000"></textarea></div>
+        <div><button class="btn btn-primary btn-sm" type="submit">Update</button></div>
+      </form>
+      <p class="hint spaced">Approvals are made under "Approval decision"; disbursed statuses follow confirmed payments.</p>
+      {% else %}<p class="muted">No manual status changes are available from {{ STATUSES[app.status] }}{% if app.status == 'declined' %} (only an administrator can reopen){% endif %}.</p>{% endif %}
+    </section>
+    <section class="panel">
+      <h2>Assigned to</h2>
+      <form method="post" action="{{ url_for('admin.assign', app_id=app.id) }}" class="form inline-form">
+        {{ csrf() }}
+        <div><label class="sr" for="assigned_to">Staff member</label>
+          <select id="assigned_to" name="assigned_to"><option value="">Unassigned</option>{% for s in staff_members %}<option value="{{ s.id }}" {% if app.assigned_to == s.id %}selected{% endif %}>{{ s.full_name }}</option>{% endfor %}</select></div>
+        <div><button class="btn btn-outline btn-sm" type="submit">Save</button></div>
+      </form>
+    </section>
+    {% endif %}
+
+    <section class="panel">
+      <h2>Customer</h2>
+      <dl class="facts">
+        <dt>Name</dt><dd>{{ app.full_name }}</dd>
+        <dt>Email</dt><dd><a href="mailto:{{ app.email }}">{{ app.email }}</a>{% if not app.email_verified_at %} <span class="tag-sm tag-submitted">unverified</span>{% endif %}</dd>
+        <dt>Phone</dt><dd>{% if app.phone %}<a href="tel:{{ app.phone }}">{{ app.phone }}</a>{% else %}Not given{% endif %}</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>History</h2>
+      <ol class="timeline">
+        {% for h in history %}
+          <li class="{{ 'bad' if h.status in ('declined', 'withdrawn', 'cancelled') else 'done' }}"><span class="dot"></span><div><strong>{{ STATUSES[h.status] }}</strong>
+            <small>{{ h.created_at|date }} · {{ h.actor_name or 'system' }}{% if h.actor_role == 'client' %} (customer){% endif %}</small>
+            {% if h.note %}<small class="block pre">{{ h.note }}</small>{% endif %}</div></li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    {% if trail %}
+    <section class="panel">
+      <h2>Audit trail</h2>
+      <ul class="audit-mini">
+        {% for l in trail %}<li><code>{{ l.event }}</code> <span class="muted small">{{ l.created_at|date }} · {{ l.full_name or 'anonymous' }}</span></li>{% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

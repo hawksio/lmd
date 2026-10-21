@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% set o = org() %}
+{% set user = current_user() %}
+{% set staff = is_staff(user) %}
+{% set owner = is_platform_owner(user) %}
+<title>{% block title %}Portal{% endblock %} | {{ o.name if o else 'Platform console' }}</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0C1A1D">
+<link rel="icon" href="/brand/lmd-monogram.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/app.css">
+{% if o %}{% set accent = o.brand_color %}<style>:root { --accent: {{ accent }}; --on-accent: {{ text_on(accent) }}; }</style>{% endif %}
+<script src="/assets/site.js" defer></script>
+<script src="/assets/app.js" defer></script>
+</head>
+<body class="app {% if user %}has-sidebar{% endif %} {% block body_class %}{% endblock %}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="{{ url_for('platform.dashboard') if owner else (url_for('admin.dashboard') if staff else ('/account/' if user else '/')) }}"
+       aria-label="{{ o.name if o else 'Platform console' }}">
+      {% if o and o.logo_file %}<img src="/branding/logo?v={{ o.logo_file }}" height="40" alt="" class="org-logo">
+      {% else %}<img src="/brand/lmd-monogram.svg" width="40" height="40" alt="">{% endif %}
+      <span class="brand-text"><strong>{{ o.name if o else 'Platform' }}</strong><small>{% if owner or not o %}Console{% elif staff %}Staff{% else %}Client portal{% endif %}</small></span>
+    </a>
+    {% if user %}
+      <span class="who">{{ user.full_name }}{% if staff %} · {{ STAFF_ROLES[user.role] }}{% elif owner %} · Platform owner{% endif %}</span>
+      <button class="nav-toggle" aria-expanded="false" aria-controls="site-nav"><span class="sr">Menu</span><span class="bars" aria-hidden="true"></span></button>
+    {% else %}
+      <nav class="site-nav public-nav" aria-label="Main">
+        <ul>{% if o %}<li><a href="/">Home</a></li><li><a href="/faq.html">FAQs</a></li><li><a href="/contact.html">Contact</a></li>{% endif %}</ul>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('auth.login') }}">Sign in</a>
+      </nav>
+    {% endif %}
+  </div>
+</header>
+
+{% macro navlink(endpoint, label, match=(), badge=0) -%}
+  <li><a href="{{ url_for(endpoint) }}" {% if request.endpoint == endpoint or request.endpoint in match %}aria-current="page"{% endif %}>{{ label }}{% if badge %} <span class="count" aria-label="{{ badge }} unread">{{ badge }}</span>{% endif %}</a></li>
+{%- endmacro %}
+
+<div class="{{ 'portal wrap' if user else 'wrap' }}">
+  {% if user %}
+  <nav id="site-nav" class="sidebar" aria-label="{{ 'Platform' if owner else ('Staff' if staff else 'Account') }}">
+    <ul>
+    {% if owner %}
+      {{ navlink('platform.dashboard', 'Overview') }}
+      {{ navlink('platform.organisations', 'Organisations', ('platform.organisation', 'platform.new_organisation')) }}
+      {{ navlink('platform.plans', 'Plans') }}
+      {{ navlink('platform.platform_settings', 'Platform limits') }}
+      {{ navlink('auth.security', 'Account and security') }}
+    {% elif staff %}
+      {{ navlink('admin.dashboard', 'Overview') }}
+      {{ navlink('admin.applications', 'Applications', ('admin.application',)) }}
+      {{ navlink('admin.approvals', 'Approval queue') }}
+      {{ navlink('documents.queue', 'Document verification', ('documents.review',)) }}
+      {{ navlink('admin.clients', 'Customers') }}
+      {{ navlink('products.products', 'Loan products', ('products.edit_product',)) }}
+      {{ navlink('finance.disbursements', 'Disbursements') }}
+      {{ navlink('finance.repayments', 'Repayments') }}
+      {{ navlink('finance.fees', 'Fees and payments') }}
+      {{ navlink('admin.letters_list', 'Agreements and letters') }}
+      {{ navlink('admin.messages', 'Messages') }}
+      {{ navlink('admin.notifications', 'Notifications', badge=unread_notifications|default(0)) }}
+      {{ navlink('admin.enquiries', 'Enquiries', ('admin.enquiry',)) }}
+      {% if can('manage_marketing') %}{{ navlink('marketing.campaigns', 'Marketing', ('marketing.campaign', 'marketing.edit_campaign', 'marketing.suppressions')) }}{% endif %}
+      {% if can('view_reports') %}{{ navlink('reports.index', 'Reports') }}{% endif %}
+      {% if can('manage_financial_settings') or can('view_reports') %}{{ navlink('products.financial_settings', 'Financial settings', ('products.edit_rule',)) }}{% endif %}
+      {% if can('edit_content') %}{{ navlink('cms.edit', 'Website content') }}{% endif %}
+      {% if can('manage_staff') %}{{ navlink('admin.staff', 'Staff and permissions') }}{% endif %}
+      {% if can('manage_org_settings') %}{{ navlink('orgsettings.edit', 'Organisation settings') }}{% endif %}
+      {% if can('view_audit') %}{{ navlink('admin.audit_log', 'Audit log') }}{{ navlink('admin.email_log', 'Email log') }}{% endif %}
+      {{ navlink('auth.security', 'Account and security') }}
+    {% else %}
+      {{ navlink('client.dashboard', 'Overview') }}
+      {{ navlink('client.applications', 'My applications', ('client.view_application', 'client.edit_application', 'client.new_application', 'underwriting.offer')) }}
+      {{ navlink('client.documents', 'My documents') }}
+      {{ navlink('client.messages', 'Messages', badge=unread_notifications|default(0)) }}
+      {{ navlink('auth.security', 'Account and security', ('client.profile',)) }}
+      {{ navlink('client.help_page', 'Help and contact') }}
+    {% endif %}
+    </ul>
+    <form method="post" action="{{ url_for('auth.logout') }}" class="nav-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-ghost btn-sm" type="submit">Sign out</button>
+    </form>
+  </nav>
+  {% endif %}
+
+  <main id="main" class="app-main" tabindex="-1">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <p class="notice {{ category }} flash" role="{{ 'alert' if category == 'error' else 'status' }}">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+    {% if user and not staff and not owner and not user.email_verified_at %}
+      <div class="notice verify-banner">
+        <p><strong>Please confirm your email address.</strong> We sent a link to {{ user.email }}. You can save drafts now, but you'll need to confirm it before submitting an application.</p>
+        <form method="post" action="{{ url_for('auth.resend_verification') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          <button class="btn btn-outline btn-sm" type="submit">Send a new link</button>
+        </form>
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<footer class="app-footer">
+  <div class="wrap">
+    {% if o %}
+    <p>{{ site().show('legal_name') }}{% if site().regulatory_statement %} · {{ site().regulatory_statement }}{% endif %}
+      {% if o.slug == config.STATIC_SITE_ORG %} · <a href="/">Main website</a> · <a href="/privacy.html">Privacy</a> · <a href="/complaints.html">Complaints</a>{% endif %}</p>
+    {% else %}<p>Platform console. Organisation data is not shown here.</p>{% endif %}
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}Security alert: {{ what }}.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ (client or user).full_name.split(' ')[0] }},</p><p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">Security alert</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">Your account was changed</h1><p style="margin:0 0 16px;">We're letting you know that {{ what }} on your LMD Finance account at {{ now }} UTC.</p><p style="margin:0 0 16px;"><strong>If this was you</strong>, there's nothing to do. <strong>If it wasn't</strong>, reset your password straight away and contact us.</p>{{ button(base_url + '/account/forgot', 'Reset my password') }}<p style="margin:0;color:#56676A;font-size:14px;">For your security we never ask for passwords, codes or bank details by email.</p>
+{% endblock %}

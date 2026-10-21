@@ -1,0 +1,15 @@
+# /etc/systemd/system/lmd-backup.service — nightly backup + retention housekeeping (see lmd-backup.timer)
+[Unit]
+Description=LMD Finance backup
+
+[Service]
+Type=oneshot
+User=lmd
+WorkingDirectory=/srv/lmd/app
+EnvironmentFile=/etc/lmd/lmd.env
+ExecStart=/srv/lmd/app/.venv/bin/flask --app backend backup --dest /srv/lmd/backups --keep-days 30
+ExecStartPost=/srv/lmd/app/.venv/bin/flask --app backend purge-expired
+ExecStartPost=/srv/lmd/app/.venv/bin/flask --app backend verify-audit
+ExecStartPost=/srv/lmd/app/.venv/bin/flask --app backend subscription-housekeeping
+# Copy /srv/lmd/backups off the server too (e.g. rclone to encrypted object storage): a backup on the
+# same disk does not survive losing the server.

@@ -1,0 +1,9 @@
+Hello {{ (client or user).full_name.split(' ')[0] }},
+
+We have made a payment of {{ d.amount_pence|pence }} on {{ d.paid_on }} (reference {{ d.payment_reference }}) for application {{ app.id|ref }}.
+
+{{ base_url }}/account/applications/{{ app.id }}
+
+For your security we never ask for passwords, codes or bank details by email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

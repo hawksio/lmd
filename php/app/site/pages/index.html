@@ -1,0 +1,186 @@
+---
+title: LMD Finance Ltd | Business finance with a real team behind it
+description: Business loans, asset finance and cash-flow funding for UK businesses, explained in plain English. Apply and track your application online.
+nav: home
+body_class: home
+styles_before: assets/scrollcraft/scrollcraft.css
+styles: assets/home.css
+scripts: assets/scrollcraft/scrollcraft.js, assets/home.js
+---
+<!-- Scroll-craft build "lmd-home". Grammar: Consultation (see scrollcraft/builds/lmd-home/BRIEF.md).
+     The engine in assets/scrollcraft/ is never edited; everything bespoke lives in home.css / home.js. -->
+
+<!-- 1 · WELCOME: pinned layered hero. Photo bed recedes, consultation card floats forward, copy rides at 1x. -->
+<section class="h-hero" data-sc-act="pin" data-sc-span="1.6">
+  <div data-sc-stage class="h-hero__stage">
+    <div class="h-hero__bed" data-sc-parallax="-0.6">
+      <x-img src="hero/hero-team" class="h-plane h-hero__photo" alt="Four business professionals standing together in a bright office atrium" sizes="(min-width: 761px) 66vw, 100vw" eager>
+    </div>
+    <div class="h-hero__copy" data-sc-cue="0 0.8 0">
+      <h1>Business finance with a real team behind it</h1>
+      <p class="h-hero__sub">Loans, asset finance and cash-flow funding for UK businesses, with a clear process from first conversation to decision.</p>
+      <div class="h-hero__ctas">
+        <a class="btn btn-primary" href="#make-it-yours">Book a consultation</a>
+        <a class="btn btn-ghost" href="#plan">See how a plan comes together</a>
+      </div>
+    </div>
+    <figure class="h-hero__inset" data-sc-parallax="-1.8">
+      <x-img src="consultations/one-to-one" class="h-plane" alt="An adviser talking through a funding plan with a business owner" sizes="(min-width: 761px) 26vw, 44vw" eager>
+      <figcaption>It starts with a conversation.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- 2 · UNDERSTOOD: flow, dark ground, type only. The one kinetic headline before the peak. -->
+<section class="h-understood" data-sc-act="flow">
+  <div class="wrap h-understood__inner">
+    <h2 data-sc-cue="0.14 1" data-sc-kinetic="lines">You know where the business is going.</h2>
+    <div class="h-understood__lines" data-sc-in data-sc-stagger="80">
+      <p>Funding is usually what keeps it waiting.</p>
+      <p>Forms, jargon and a call centre should not be the price of finding out what's possible.</p>
+      <p class="h-understood__turn">So we start with a conversation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · CHOICE: pan. Heading is the first rail item and a closing note the last, so the rail has real overflow. -->
+<section class="h-range" data-sc-act="pan" data-sc-span="3.4" aria-label="Finance options">
+  <div data-sc-stage class="h-range__stage">
+    <div class="h-rail" data-sc-pan="0.04">
+      <div class="h-rail__lead" style="--i:0">
+        <h2>Three ways we fund a business</h2>
+        <p>Some businesses need one. Some combine two. We will explain plainly which might fit.</p>
+      </div>
+      <article class="h-rail__item" style="--i:1">
+        <x-img src="solutions/owners-documents" alt="Business owners reviewing loan documents with a consultant" sizes="(min-width: 761px) 34vw, 78vw">
+        <h3>Loans</h3>
+        <p>Fixed monthly repayments for growth, hiring, stock or a refit.</p>
+        <a href="solutions.html#loans">About business loans</a>
+      </article>
+      <article class="h-rail__item" style="--i:2">
+        <x-img src="consultations/adviser-laptop" alt="Two consultants comparing equipment finance figures on a laptop" sizes="(min-width: 761px) 34vw, 78vw">
+        <h3>Assets</h3>
+        <p>Machinery, vehicles and technology, paid for over their working life.</p>
+        <a href="solutions.html#asset">About asset finance</a>
+      </article>
+      <article class="h-rail__item" style="--i:3">
+        <x-img src="solutions/owners-review" alt="A consultant and business owners reviewing a cash-flow forecast" sizes="(min-width: 761px) 34vw, 78vw">
+        <h3>Cash flow</h3>
+        <p>Money released from unpaid invoices, so new orders are never a strain.</p>
+        <a href="solutions.html#cashflow">About cash-flow finance</a>
+      </article>
+      <div class="h-rail__note" style="--i:4">
+        <p>Not sure which? That is exactly what the first conversation is for.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · PEOPLE: flow + reveal. Deliberately quiet: the silence in front of the peak. -->
+<section class="h-people" data-sc-act="flow">
+  <div class="wrap h-people__grid">
+    <div class="h-people__text" data-sc-in data-sc-stagger="70">
+      <h2>A first meeting, in plain English</h2>
+      <p>We sit down with you, in the office or on a video call, and talk about the business before we talk about money.</p>
+      <p>Then we look at the options that may suit you, explain the full cost of each, and help with the paperwork if you decide to go ahead.</p>
+      <p><a class="h-link" href="how-it-works.html">How it works, step by step</a></p>
+    </div>
+    <div class="h-people__media">
+      <figure class="h-people__main" data-sc-reveal="left" data-sc-reveal-at="0.12 0.42">
+        <x-img src="team/staff-collaborating" alt="Colleagues collaborating around a table in a sunlit meeting room" sizes="(min-width: 900px) 46vw, 100vw">
+      </figure>
+      <figure class="h-people__float" data-sc-parallax="-1.1">
+        <x-img src="team/employee-computer" alt="A finance professional preparing paperwork at a desk" sizes="(min-width: 900px) 20vw, 44vw">
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · THE PLAN (peak): pinned, longest span on the page. Photos move from talking to comparing to signing
+     while the plan on the right writes itself out. Bespoke: rows driven from --sc-p in home.js. -->
+<section id="plan" class="h-plan" data-sc-act="pin" data-sc-span="4.2" data-plan-act>
+  <div data-sc-stage class="h-plan__stage">
+    <div class="h-plan__media">
+      <figure class="h-plan__shot">
+        <x-img src="consultations/adviser-client" alt="An adviser and a client talking through the client's plans" sizes="(min-width: 900px) 44vw, 100vw">
+      </figure>
+      <figure class="h-plan__shot" data-sc-reveal="up" data-sc-reveal-at="0.3 0.42">
+        <x-img src="consultations/consult-presenting" alt="An adviser presenting finance options side by side" sizes="(min-width: 900px) 44vw, 100vw">
+      </figure>
+      <figure class="h-plan__shot" data-sc-reveal="up" data-sc-reveal-at="0.62 0.74">
+        <x-img src="solutions/signing" alt="A client signing her finance agreement with an adviser beside her" sizes="(min-width: 900px) 44vw, 100vw">
+      </figure>
+      <div class="h-plan__captions">
+        <p data-sc-cue="0 0.36 0">We listen.</p>
+        <p data-sc-cue="0.3 0.68">We compare.</p>
+        <p data-sc-cue="0.62 1">You sign with us beside you.</p>
+      </div>
+    </div>
+
+    <article class="plan" aria-labelledby="plan-title">
+      <header class="plan__head">
+        <img src="brand/lmd-monogram.svg" width="40" height="40" alt="">
+        <div>
+          <h2 id="plan-title">Funding plan</h2>
+          <p>Prepared by LMD Finance Ltd</p>
+        </div>
+        <span class="plan__tag">Example</span>
+      </header>
+      <dl class="plan__rows">
+        <div class="plan__row" data-plan-at="0.06"><dt>Business</dt><dd>Sample Engineering Ltd</dd></div>
+        <div class="plan__row" data-plan-at="0.16"><dt>Goal</dt><dd>Replace two CNC machines</dd></div>
+        <div class="plan__row" data-plan-at="0.28"><dt>Finance</dt><dd>Asset finance, hire purchase</dd></div>
+        <div class="plan__row" data-plan-at="0.40"><dt>Amount</dt><dd>£<span data-sc-count="0 48,000" data-sc-count-at="0.40 0.50">0</span></dd></div>
+        <div class="plan__row" data-plan-at="0.50"><dt>Term</dt><dd><span data-sc-count="0 48" data-sc-count-at="0.50 0.58">0</span> months</dd></div>
+        <div class="plan__row plan__row--key" data-plan-at="0.62"><dt>Repayments</dt><dd>Set out in your quote</dd></div>
+        <div class="plan__row" data-plan-at="0.74"><dt>Next step</dt><dd>A conversation about your business</dd></div>
+      </dl>
+      <p class="plan__stamp" data-plan-at="0.86" aria-hidden="true">Ready to apply</p>
+      <p class="plan__small">Illustrative example for a fictional business. Not a quote or an offer of finance. Rates, fees and repayments depend on your circumstances and are only confirmed in a formal quote.</p>
+    </article>
+  </div>
+</section>
+
+<!-- 6 · MAKE IT YOURS: the close. The plan from the peak, now operable. CTA lives inside the plan. -->
+<section id="make-it-yours" class="h-close" data-sc-act="flow">
+  <div class="wrap h-close__grid">
+    <div class="h-close__text">
+      <h2 data-sc-cue="0.08" data-sc-kinetic="lines">Now make it yours.</h2>
+      <p data-sc-cue="0.12">Change the numbers to suit your business. When you send an enquiry, the plan is added to your message so the first conversation starts where you left off.</p>
+    </div>
+    <form class="plan plan--live" id="live-plan" aria-labelledby="live-title" data-example-apr="{{raw:example_apr}}">
+      <header class="plan__head">
+        <img src="brand/lmd-monogram.svg" width="40" height="40" alt="">
+        <div>
+          <h3 id="live-title">Your funding plan</h3>
+          <p>Draft, for discussion</p>
+        </div>
+      </header>
+      <div class="plan__field">
+        <label for="lp-type">Finance</label>
+        <select id="lp-type" name="type">
+          <option value="asset">Asset finance</option>
+          <option value="loans">Business loan</option>
+          <option value="cashflow">Cash-flow finance</option>
+          <option value="general">Not sure yet</option>
+        </select>
+      </div>
+      <div class="plan__field">
+        <label for="lp-amount">Amount <output id="lp-amount-out" for="lp-amount">£48,000</output></label>
+        <input id="lp-amount" name="amount" type="range" min="5000" max="250000" step="1000" value="48000">
+      </div>
+      <div class="plan__field">
+        <label for="lp-term">Term <output id="lp-term-out" for="lp-term">48 months</output></label>
+        <input id="lp-term" name="term" type="range" min="12" max="84" step="6" value="48">
+      </div>
+      {{if:example_apr}}<div class="plan__total">
+        <span>Example monthly</span>
+        <strong><output id="lp-monthly"></output></strong>
+      </div>
+      <p class="plan__small">Representative example at {{site:example_apr}}% APR. Not a quote: your actual rate depends on your circumstances.</p>{{/if:example_apr}}
+      {{ifnot:example_apr}}<p class="plan__small">We don't show example repayments here. Rates, fees and the total cost are set out in writing before you decide anything.</p>{{/ifnot:example_apr}}
+      <button class="btn btn-primary plan__cta" type="submit">Send this as an enquiry</button>
+      <a class="plan__alt" href="/account/applications/new" data-apply>Or apply online now</a>
+    </form>
+  </div>
+</section>

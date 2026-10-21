@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, error %}
+{% block title %}Website content{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Website content</h1><p>Company details and FAQs used across the public site, letters and emails. Plain text only.</p></div></div>
+{% if missing %}<p class="notice error">Not yet confirmed (shown to the public as placeholders): {{ missing|join(', ') }}. Enter only verified facts.</p>{% endif %}
+{% if draft_row %}
+<div class="notice">
+  <p><strong>Unpublished draft</strong> saved {{ draft_row.created_at|date }}{% if changed %}. Changes: {{ changed|join(', ') }}{% endif %}.</p>
+  <p class="small">Preview: {% for p in pages %}<a href="{{ url_for('cms.preview', page=p) }}" target="_blank" rel="noopener">{{ p }}</a>{{ ' · ' if not loop.last }}{% endfor %}</p>
+  <div class="inline-actions">
+  {% if can('publish_content') %}
+    <form method="post" action="{{ url_for('cms.publish') }}" class="mini-form">{{ csrf() }}
+      <label class="check"><input type="checkbox" name="confirm" value="1"> I have previewed these changes and they are verified and approved</label>
+      <button class="btn btn-primary btn-sm" type="submit">Publish</button></form>
+  {% else %}<p class="small muted">An administrator needs to publish this draft.</p>{% endif %}
+    <form method="post" action="{{ url_for('cms.discard') }}" data-confirm="Discard the unpublished draft?">{{ csrf() }}<button class="btn btn-danger btn-sm" type="submit">Discard draft</button></form>
+  </div>
+</div>
+{% endif %}
+<form method="post" class="panel form" novalidate>
+  {{ csrf() }}
+  <section class="form-section">
+    <h2>Company details</h2>
+    <p>Leave a field empty until the fact is confirmed; the site then shows a clear placeholder.</p>
+    <div class="grid-fields">
+      {% for key, (label, ph, help, kind) in fields.items() %}
+      <div class="{{ 'full' if kind == 'text' and key in ('registered_office', 'regulatory_statement', 'complaints_contact', 'announcement') else '' }}">
+        <label for="{{ key }}">{{ label }}</label>
+        {% if key in ('registered_office', 'regulatory_statement', 'complaints_contact') %}
+          <textarea id="{{ key }}" name="{{ key }}" rows="2" maxlength="600" {% if errors.get(key) %}aria-invalid="true"{% endif %} aria-describedby="{{ key }}-hint">{{ data.settings.get(key, '') }}</textarea>
+        {% else %}
+          <input id="{{ key }}" name="{{ key }}" value="{{ data.settings.get(key, '') }}" maxlength="600" {% if errors.get(key) %}aria-invalid="true"{% endif %} aria-describedby="{{ key }}-hint">
+        {% endif %}
+        <p class="hint" id="{{ key }}-hint">{{ help }}</p>
+        {{ error(errors, key) }}
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="form-section">
+    <h2>FAQs</h2>
+    <p>Empty rows are ignored. Clear both boxes to remove an FAQ.</p>
+    {% for f in data.faqs + [{'q': '', 'a': ''}, {'q': '', 'a': ''}] %}
+      <div class="faq-edit">
+        <label for="faq_q{{ loop.index }}">Question {{ loop.index }}</label>
+        <input id="faq_q{{ loop.index }}" name="faq_q" value="{{ f.q }}" maxlength="300">
+        <label for="faq_a{{ loop.index }}" class="sr">Answer {{ loop.index }}</label>
+        <textarea id="faq_a{{ loop.index }}" name="faq_a" rows="3" maxlength="3000" placeholder="Answer">{{ f.a }}</textarea>
+        {{ error(errors, 'faq' ~ loop.index0) }}
+      </div>
+    {% endfor %}
+  </section>
+  <div class="form-actions">
+    <div class="grow"><label for="note">Change note (optional)</label><input id="note" name="note" maxlength="300"></div>
+    <button class="btn btn-primary" type="submit">Save draft</button>
+  </div>
+</form>
+<section class="panel">
+  <h2>History</h2>
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Version</th><th>Status</th><th>Saved</th><th>Published</th><th>Note</th></tr></thead>
+    <tbody>{% for v in history %}
+      <tr><td>#{{ v.id }}</td><td>{{ v.status }}</td><td class="small">{{ v.created_at|date }} · {{ v.author or '—' }}</td><td class="small">{% if v.published_at %}{{ v.published_at|date }} · {{ v.publisher }}{% endif %}</td><td class="small">{{ v.note }}</td></tr>
+    {% else %}<tr><td colspan="5" class="muted">No saved versions yet: the site uses the defaults in content/site.json.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

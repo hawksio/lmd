@@ -1,0 +1,133 @@
+{% macro csrf() %}<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">{% endmacro %}
+
+{% macro error(errors, name) %}
+  {% if errors.get(name) %}<p class="field-error" id="{{ name }}-error">{{ errors[name] }}</p>{% endif %}
+{% endmacro %}
+
+{% macro input(name, label, values, errors, type='text', required=false, autocomplete=None, hint=None, money=false, cls='', maxlength=None, value=None) %}
+<div class="{{ cls }}">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="muted">*</span>{% endif %}</label>
+  <input id="{{ name }}" name="{{ name }}" type="{{ type }}"
+         value="{{ value if value is not none else (values.get(name) if values.get(name) is not none else '') }}"
+         {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+         {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+         {% if type == 'number' %}inputmode="numeric" min="0" step="1"{% endif %}
+         {% if money %}inputmode="decimal"{% endif %}
+         {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% elif hint %}aria-describedby="{{ name }}-hint"{% endif %}>
+  {% if hint %}<p class="hint" id="{{ name }}-hint">{{ hint }}</p>{% endif %}
+  {{ error(errors, name) }}
+</div>
+{% endmacro %}
+
+{% macro select(name, label, options, values, errors, required=false, cls='', hint=None, blank=true) %}
+<div class="{{ cls }}">
+  <label for="{{ name }}">{{ label }}{% if required %} <span class="muted">*</span>{% endif %}</label>
+  <select id="{{ name }}" name="{{ name }}" {% if errors.get(name) %}aria-invalid="true" aria-describedby="{{ name }}-error"{% elif hint %}aria-describedby="{{ name }}-hint"{% endif %}>
+    {% if blank %}<option value="">Choose…</option>{% endif %}
+    {% for key, text in options.items() %}
+      <option value="{{ key }}" {% if values.get(name)|string == key|string %}selected{% endif %}>{{ text }}</option>
+    {% endfor %}
+  </select>
+  {% if hint %}<p class="hint" id="{{ name }}-hint">{{ hint }}</p>{% endif %}
+  {{ error(errors, name) }}
+</div>
+{% endmacro %}
+
+{% macro badge(status) %}<span class="badge badge-{{ status }}">{{ STATUSES.get(status, status) }}</span>{% endmacro %}
+
+{% macro review_badge(status) %}<span class="tag-sm tag-{{ status }}">{{ DOC_STATUSES.get(status, status) }}</span>{% endmacro %}
+
+{% macro fee_badge(status) %}<span class="tag-sm tag-fee-{{ status }}">{{ FEE_STATUSES.get(status, status) }}</span>{% endmacro %}
+
+{% macro pager(page, pages, endpoint) %}
+  {% if pages > 1 %}
+  <nav class="pager" aria-label="Pages">
+    {% set args = request.args.to_dict() %}
+    {% if page > 1 %}{% set _ = args.update({'page': page - 1}) %}<a class="btn btn-outline btn-sm" href="{{ url_for(endpoint, **args) }}">Previous</a>{% endif %}
+    <span>Page {{ page }} of {{ pages }}</span>
+    {% if page < pages %}{% set _ = args.update({'page': page + 1}) %}<a class="btn btn-outline btn-sm" href="{{ url_for(endpoint, **args) }}">Next</a>{% endif %}
+  </nav>
+  {% endif %}
+{% endmacro %}
+
+{% macro daterange(start, end) %}
+  <div><label for="from">From</label><input id="from" name="from" type="date" value="{{ start }}"></div>
+  <div><label for="to">To</label><input id="to" name="to" type="date" value="{{ end }}"></div>
+{% endmacro %}
+
+{# Customer-facing progress. "approved" and "disbursed" stand for any approval / disbursement status. #}
+{% macro timeline(app, history) %}
+  {% set seen = history|map(attribute='status')|list %}
+  {% set approved_states = ['partially_approved', 'fully_approved', 'conditionally_approved'] %}
+  {% set disbursed_states = ['partially_disbursed', 'fully_disbursed'] %}
+  <ol class="timeline">
+    {% if app.status in ('declined', 'withdrawn', 'cancelled') %}
+      {% for h in history %}
+        <li class="{{ 'bad' if h.status in ('declined', 'withdrawn', 'cancelled') else 'done' }}"><span class="dot"></span><div><strong>{{ STATUSES[h.status] }}</strong><small>{{ h.created_at|date }}</small></div></li>
+      {% endfor %}
+    {% else %}
+      {% for step in PROGRESS %}
+        {% set members = approved_states if step == 'approved' else (disbursed_states if step == 'disbursed' else [step]) %}
+        {% set reached = members|select('in', seen)|list|length > 0 %}
+        {% set is_now = app.status in members or (step == 'underwriting' and app.status in ('documents_required', 'document_verification', 'info_requested')) %}
+        <li class="{{ 'now' if is_now else ('done' if reached else '') }}"><span class="dot"></span>
+          <div><strong>{% if is_now %}{{ STATUSES[app.status] }}{% else %}{{ PROGRESS_LABELS.get(step, STATUSES.get(step, step)) }}{% endif %}</strong>
+          <small>{% for h in history if h.status in members %}{% if loop.last %}{{ h.created_at|date }}{% endif %}{% endfor %}{% if not reached and not is_now %}Not yet{% endif %}</small></div></li>
+      {% endfor %}
+    {% endif %}
+  </ol>
+{% endmacro %}
+
+{# The financing summary. Requested, approved, scheduled and paid are always separate figures. #}
+{% macro financing(s) %}
+  {% set c = s.currency %}
+  <dl class="facts finance-facts">
+    <dt>Financing requested</dt><dd>{{ money(s.requested, c) }}</dd>
+    <dt>Financing approved</dt><dd>{% if s.approved %}{{ money(s.approved, c) }}{% if s.approved < s.requested %} <span class="tag-sm">{{ money(s.requested - s.approved, c) }} not approved</span>{% endif %}{% else %}No approval decision yet{% endif %}</dd>
+    {% if s.decision %}<dt>Approval decision</dt><dd>{{ {'full': 'Fully approved', 'partial': 'Partially approved', 'conditional': 'Conditional approval'}[s.decision.decision_type] }}</dd>{% endif %}
+    {% set open_conditions = s.conditions|selectattr('status', 'equalto', 'outstanding')|list %}
+    <dt>Conditions outstanding</dt><dd>{% if open_conditions %}{% for c2 in open_conditions %}{{ c2.text }}{% if not loop.last %}; {% endif %}{% endfor %}{% else %}None{% endif %}</dd>
+    <dt>Agreement</dt><dd>{{ s.agreement_status }}</dd>
+    <dt>Scheduled for payment</dt><dd>{{ money(s.scheduled, c) }}</dd>
+    <dt>Funds actually disbursed</dt><dd>{{ money(s.disbursed, c) }}{% if s.fees_deducted %} <small class="block muted">{{ money(s.disbursed - s.fees_deducted, c) }} paid to you after {{ money(s.fees_deducted, c) }} fees deducted</small>{% endif %}</dd>
+    <dt>Repaid</dt><dd>{{ money(s.repaid, c) }}</dd>
+    {% if s.outstanding_principal is not none %}<dt>Outstanding principal</dt><dd>{{ money(s.outstanding_principal, c) }}</dd>{% endif %}
+    {% if s.next_due %}<dt>Next repayment</dt><dd>{{ money(s.next_due.unpaid_minor, c) }} due {{ s.next_due.due_date }}</dd>{% endif %}
+  </dl>
+  {% if s.approved and not s.disbursed %}<p class="notice small">Approved financing is not money in your account. Nothing has been paid out yet.</p>{% endif %}
+{% endmacro %}
+
+{# The pricing breakdown frozen on a decision. #}
+{% macro breakdown(q, show_schedule=true) %}
+  {% set c = q.currency %}
+  <dl class="facts">
+    <dt>Amount approved</dt><dd>{{ money(q.approved, c) }}{% if q.unapproved %} <small class="block muted">of {{ money(q.requested, c) }} requested</small>{% endif %}</dd>
+    <dt>Term</dt><dd>{{ q.term_months }} months, {{ q.instalments }} {{ FREQUENCIES[q.product.repayment_frequency]|lower }} payments</dd>
+    <dt>Interest rate</dt><dd>{{ q.annual_rate }}% a year ({{ 'reducing balance' if q.product.interest_method == 'amortising' else 'flat rate' }}){% if q.interest %}<small class="block muted">{{ q.interest.name }}</small>{% endif %}</dd>
+    {% for f in q.fees %}
+      <dt>{{ f.name }}</dt><dd>{{ money(f.amount, c) }}
+        <small class="block muted">{% if f.method == 'percent' %}{{ f.percent }}% of the {{ RULE_BASES[f.basis]|lower }} ({{ money(f.basis_amount, c) }}){% else %}Fixed amount{% endif %} · {{ RULE_TIMINGS[f.timing] }}</small>
+        {% if f.disclosure %}<small class="block">{{ f.disclosure }}</small>{% endif %}</dd>
+    {% endfor %}
+    <dt>Paid to you</dt><dd>{{ money(q.net_advance, c) }}{% if q.fees_deducted %}<small class="block muted">after {{ money(q.fees_deducted, c) }} deducted fees</small>{% endif %}</dd>
+    <dt>Regular payment</dt><dd>{{ money(q.regular_payment, c) }}</dd>
+    <dt>Total interest</dt><dd>{{ money(q.total_interest, c) }}</dd>
+    <dt>Total fees</dt><dd>{{ money(q.total_fees, c) }}</dd>
+    <dt>Total amount repayable</dt><dd><strong>{{ money(q.total_repayable, c) }}</strong></dd>
+    <dt>Total charge for credit</dt><dd>{{ money(q.total_charge_for_credit, c) }}</dd>
+    <dt>APR (calculated)</dt><dd>{{ q.apr_calculated if q.apr_calculated is not none else 'n/a' }}%<small class="block muted">Calculated from the payments above</small></dd>
+  </dl>
+  {% if q.disclosures %}
+    <h3 class="small-h">Other charges and disclosures</h3>
+    <ul class="plain-list">{% for d in q.disclosures %}<li><strong>{{ d.name }}</strong>: {% if d.method == 'percent' %}{{ d.percent }}% of the {{ RULE_BASES[d.basis]|lower }}{% else %}{{ money(d.fixed, c) }}{% endif %} · {{ RULE_TIMINGS[d.timing] }}{% if d.disclosure %}. {{ d.disclosure }}{% endif %}</li>{% endfor %}</ul>
+  {% endif %}
+  {% if show_schedule %}
+  <details class="inline-details"><summary>Repayment schedule ({{ q.instalments }} payments)</summary>
+    <div class="table-wrap"><table class="data compact">
+      <thead><tr><th>No.</th><th>Principal</th><th>Interest</th><th>Fees</th><th>Payment</th><th>Balance after</th></tr></thead>
+      <tbody>{% for r in q.schedule %}<tr><td>{{ r.number }}</td><td>{{ money(r.principal, c) }}</td><td>{{ money(r.interest, c) }}</td><td>{{ money(r.fees, c) }}</td><td>{{ money(r.amount, c) }}</td><td>{{ money(r.balance, c) }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <p class="hint">Due dates are set from the date funds are paid out.</p>
+  </details>
+  {% endif %}
+{% endmacro %}

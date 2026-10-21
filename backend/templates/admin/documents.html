@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import review_badge, pager %}
+{% block title %}Document verification{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Document verification</h1><p>{{ total }} document{{ '' if total == 1 else 's' }} uploaded by customers. Verifying a document never approves a loan.</p></div></div>
+<form class="filters" method="get">
+  <div><label for="status">Status</label><select id="status" name="status">
+    <option value="awaiting" {% if status == 'awaiting' %}selected{% endif %}>Awaiting review</option>
+    <option value="all" {% if status == 'all' %}selected{% endif %}>All</option>
+    {% for k, v in DOC_STATUSES.items() if k != 'not_submitted' %}<option value="{{ k }}" {% if status == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div><label for="type">Type</label><select id="type" name="type"><option value="">All types</option>{% for k, v in DOC_TYPES.items() %}<option value="{{ k }}" {% if doc_type == k %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div><label for="q">Applicant or reference</label><input id="q" name="q" type="search" value="{{ q }}" maxlength="100"></div>
+  <button class="btn btn-dark btn-sm" type="submit">Filter</button>
+</form>
+{% if rows %}
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Document</th><th>Applicant</th><th>Uploaded</th><th>Status</th><th></th></tr></thead>
+  <tbody>{% for d in rows %}
+    <tr><td>{{ DOC_TYPES.get(d.doc_type, 'Other') }}<span class="sub">{{ d.original_name }}{% if d.replaces_id %} · replacement{% endif %}</span></td>
+      <td>{{ d.full_name }}<span class="sub"><a href="{{ url_for('admin.application', app_id=d.application_id) }}#documents">{{ d.application_id|ref }}</a> · {{ d.company_name }}</span></td>
+      <td class="muted small">{{ d.created_at|date }}</td><td>{{ review_badge(d.review_status) }}</td>
+      <td><a class="btn btn-outline btn-sm" href="{{ url_for('documents.review', doc_id=d.id) }}">Review</a></td></tr>
+  {% endfor %}</tbody></table></div>
+{{ pager(page, pages, 'documents.queue') }}
+{% else %}<div class="panel empty"><p>No documents match.</p></div>{% endif %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}{{ c.name }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('marketing.campaigns') }}">Marketing</a>
+<div class="page-head"><div><h1>{{ c.name }}</h1><p>{{ c.subject }} · {{ SEGMENTS[c.segment] }} · status: {{ c.status }}</p></div>
+  {% if c.status == 'draft' %}<a class="btn btn-outline" href="{{ url_for('marketing.edit_campaign', cid=c.id) }}">Edit</a>{% endif %}</div>
+<div class="layout-2">
+  <section class="panel">
+    <h2>Preview</h2>
+    <iframe class="email-preview" src="{{ url_for('marketing.preview', cid=c.id) }}" title="Email preview" sandbox></iframe>
+  </section>
+  <div>
+    <section class="panel">
+      <h2>Test send</h2>
+      <p class="muted small">Sends a copy marked [TEST] to you only ({{ current_user().email }}).</p>
+      <form method="post" action="{{ url_for('marketing.test_send', cid=c.id) }}">{{ csrf() }}<button class="btn btn-outline btn-sm" type="submit">Send test to me</button></form>
+    </section>
+    {% if c.status == 'draft' %}
+    <section class="panel">
+      <h2>Schedule</h2>
+      <p class="muted small">Current audience: {{ audience }} people. Eligibility is checked again at sending time.</p>
+      <ul class="checklist">{% for label, ok in checks %}<li class="{{ 'ok' if ok else 'todo' }}">{{ '✓' if ok else '○' }} {{ label }}</li>{% endfor %}</ul>
+      <form method="post" action="{{ url_for('marketing.launch', cid=c.id) }}" class="form">
+        {{ csrf() }}
+        <div><label for="scheduled_for">Send at (UTC, empty = next run)</label><input id="scheduled_for" name="scheduled_for" type="datetime-local"></div>
+        <label class="check"><input type="checkbox" name="confirm" value="1"> I confirm this campaign has been approved and the audience consented to marketing</label>
+        <div><button class="btn btn-primary btn-sm" type="submit">Schedule campaign</button></div>
+      </form>
+    </section>
+    {% endif %}
+    {% if c.status in ('draft', 'scheduled') %}
+    <form method="post" action="{{ url_for('marketing.cancel', cid=c.id) }}" data-confirm="Cancel this campaign?">{{ csrf() }}<button class="btn btn-danger btn-sm" type="submit">Cancel campaign</button></form>
+    {% endif %}
+    {% if stats %}
+    <section class="panel">
+      <h2>Delivery</h2>
+      <dl class="facts">{% for k, n in stats.items() %}<dt>{{ k|capitalize }}</dt><dd>{{ n }}</dd>{% endfor %}</dl>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

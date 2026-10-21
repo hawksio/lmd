@@ -1,0 +1,9 @@
+Hello {{ enquiry.name.split(' ')[0] }},
+
+{{ body }}
+
+{{ staff.full_name }}
+
+For your security we never ask for passwords, codes or bank details by email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

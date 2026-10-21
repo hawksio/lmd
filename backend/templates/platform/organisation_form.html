@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, input, error %}
+{% block title %}New organisation{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('platform.organisations') }}">Organisations</a>
+<div class="page-head"><div><h1>New organisation</h1><p>Creates the organisation, its subscription (manual billing) and invites its first administrator.</p></div></div>
+<p class="notice small">Onboard only organisations you have checked are entitled to lend or broker finance where they operate. The platform does not verify licences.</p>
+<form method="post" class="panel form narrow-form" novalidate>
+  {{ csrf() }}
+  {{ input('name', 'Organisation name', form, errors, required=true, maxlength=120) }}
+  {{ input('slug', 'Address', form, errors, required=true, maxlength=31, hint='Their portal will be at <address>.' ~ base ~ ' (a custom domain can be added later).') }}
+  <div><label for="currency">Default currency</label><select id="currency" name="currency">{% for k in CURRENCIES %}<option value="{{ k }}" {% if form.currency == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></div>
+  <div><label for="plan_id">Plan</label><select id="plan_id" name="plan_id"><option value="">Choose…</option>{% for p in plans %}<option value="{{ p.id }}" {% if form.plan_id == p.id|string %}selected{% endif %}>{{ p.name }} · {{ money(p.price_minor, p.currency) }}/{{ p.billing_period }}{% if p.trial_days %} · {{ p.trial_days }}-day trial{% endif %}</option>{% endfor %}</select>{{ error(errors, 'plan_id') }}</div>
+  {{ input('admin_name', 'First administrator: name', form, errors, required=true, maxlength=120) }}
+  {{ input('admin_email', 'First administrator: email', form, errors, type='email', required=true, maxlength=200) }}
+  <div><button class="btn btn-primary" type="submit">Create organisation</button></div>
+</form>
+{% endblock %}

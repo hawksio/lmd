@@ -1,0 +1,8 @@
+Hello {{ (client or user).full_name.split(' ')[0] }},
+
+The team has sent you a message about application {{ app.id|ref }}. Sign in to read it:
+{{ base_url }}/account/applications/{{ app.id }}#messages
+
+For your security we never ask for passwords, codes or bank details by email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

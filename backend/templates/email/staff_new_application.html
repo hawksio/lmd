@@ -1,0 +1,21 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button, facts %}
+{% block preheader %}{{ app.company_name }} applied for {{ app.amount|gbp }} {{ FINANCE_TYPES.get(app.finance_type, '') }}.{% endblock %}
+{% block body %}
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">New application</p>
+<h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">{{ app.company_name }}</h1>
+<p style="margin:0;">A new application has been submitted and is waiting for review.</p>
+{{ facts([
+  ('Reference', app.id|ref),
+  ('Client', client.full_name),
+  ('Email', client.email),
+  ('Phone', client.phone or 'Not given'),
+  ('Finance', FINANCE_TYPES.get(app.finance_type, '')),
+  ('Amount', app.amount|gbp),
+  ('Term', (app.term_months|string) + ' months'),
+  ('Annual turnover', app.annual_turnover|gbp),
+  ('Time trading', YEARS_TRADING.get(app.years_trading, '')),
+]) }}
+{{ button(base_url + '/admin/applications/' ~ app.id, 'Review application') }}
+{% endblock %}
+{% block footer %}Staff notification. Sent to the LMD Finance team.{% endblock %}

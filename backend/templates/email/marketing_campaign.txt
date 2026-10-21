@@ -1,0 +1,9 @@
+{% if test %}[TEST EMAIL]
+
+{% endif %}Hello {{ first_name or 'there' }},
+
+{{ campaign.body }}
+
+--
+{{ site.show('legal_name') }}, {{ site.show('registered_office') }}
+You're receiving this because you opted in. Unsubscribe: {{ unsubscribe_link }}

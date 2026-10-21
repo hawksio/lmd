@@ -1,0 +1,6 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}You have a new message about {{ app.id|ref }}.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ (client or user).full_name.split(' ')[0] }},</p><p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">{{ app.id|ref }} · {{ app.company_name }}</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">You have a new message</h1><p style="margin:0 0 16px;">The LMD Finance team has sent you a message about your application. For your privacy, please sign in to read it.</p>{{ button(base_url + '/account/applications/' ~ app.id + '#messages', 'Read the message') }}<p style="margin:0;color:#56676A;font-size:14px;">For your security we never ask for passwords, codes or bank details by email.</p>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge %}
+{% block title %}Approval queue{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Approval queue</h1><p>Decisions waiting to be issued, applications in review, and accepted offers waiting for an agreement.</p></div></div>
+<section class="panel">
+  <h2>Proposed decisions</h2>
+  {% if proposed %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Application</th><th>Decision</th><th>Proposed by</th><th>Second person</th></tr></thead>
+    <tbody>{% for d in proposed %}
+      <tr><td><a href="{{ url_for('admin.application', app_id=d.application_id) }}#decision">{{ d.company_name }}</a><span class="sub">{{ d.application_id|ref }} · revision {{ d.revision }}</span></td>
+        <td>{{ d.decision_type|capitalize }}: {{ money(d.approved_minor, d.currency) }}<span class="sub">of {{ money(d.requested_minor, d.currency) }} requested</span></td>
+        <td>{{ d.proposer }}<span class="sub">{{ d.proposed_at|date }}</span></td>
+        <td>{% if d.needs_second_approval %}{% if d.proposed_by == me %}<span class="tag-sm tag-submitted">Someone else must issue</span>{% else %}<span class="tag-sm tag-under_review">You can review and issue</span>{% endif %}{% else %}Not required{% endif %}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<p class="muted">None.</p>{% endif %}
+</section>
+<section class="panel">
+  <h2>In review</h2>
+  {% if underwriting %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Application</th><th>Requested</th><th>Status</th><th>Submitted</th></tr></thead>
+    <tbody>{% for a in underwriting %}
+      <tr><td><a href="{{ url_for('admin.application', app_id=a.id) }}">{{ a.company_name }}</a><span class="sub">{{ a.id|ref }} · {{ a.full_name }}</span></td>
+        <td>{{ money((a.amount or 0) * 100, a.currency) }}</td><td>{{ badge(a.status) }}</td><td class="muted small">{{ a.submitted_at|date }}</td></tr>
+    {% endfor %}</tbody></table></div>
+  {% else %}<p class="muted">None.</p>{% endif %}
+</section>
+<section class="panel">
+  <h2>Offers accepted, agreement to prepare</h2>
+  {% if accepted %}
+  <ul class="doc-list">{% for a in accepted %}<li><span><a href="{{ url_for('admin.application', app_id=a.id) }}#letters">{{ a.company_name }}</a><small class="block">{{ a.id|ref }} · {{ a.full_name }} · accepted {{ a.accepted_at|date }}</small></span>{{ badge(a.status) }}</li>{% endfor %}</ul>
+  {% else %}<p class="muted">None.</p>{% endif %}
+</section>
+{% endblock %}

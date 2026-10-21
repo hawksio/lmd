@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, breakdown %}
+{% block title %}Your offer · {{ app.id|ref }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('client.view_application', app_id=app.id) }}">{{ app.id|ref }}</a>
+<div class="page-head"><div><h1>Your offer</h1>
+  <p>{{ {'full': 'Fully approved', 'partial': 'Partially approved', 'conditional': 'Conditional approval'}[d.decision_type] }} on {{ d.issued_at|date }}.</p></div></div>
+<p class="notice"><strong>This is an offer, not a payment.</strong> No money has been paid. If you accept, we'll prepare a loan agreement for you to review; nothing is binding until that agreement is signed.</p>
+<div class="layout-2">
+  <section class="panel">
+    <h2>The figures</h2>
+    {{ breakdown(q) }}
+  </section>
+  <div>
+    <section class="panel">
+      <h2>Conditions</h2>
+      {% if conditions %}<ul class="plain-list">{% for cnd in conditions %}<li>{{ cnd.text }} <span class="tag-sm">{{ cnd.status|capitalize }}</span></li>{% endfor %}</ul>
+      {% else %}<p class="muted">None.</p>{% endif %}
+    </section>
+    <section class="panel">
+      <h2>Your response</h2>
+      {% if accepted %}
+        <p class="notice success">You accepted this offer on {{ accepted.accepted_at|date }}. Your agreement will follow.</p>
+      {% elif app.status in ('partially_approved', 'fully_approved', 'conditionally_approved') %}
+        <form method="post" class="form">
+          {{ csrf() }}
+          <label class="check"><input type="checkbox" name="accept" value="1"> I have read the interest rate, fees, total amount repayable, repayment schedule and conditions, and I want to proceed to an agreement.</label>
+          <div><button class="btn btn-primary" type="submit">Accept offer</button></div>
+        </form>
+        <p class="hint spaced">Questions? <a href="{{ url_for('client.view_application', app_id=app.id) }}#messages">Message the team</a> before accepting. You don't have to accept.</p>
+      {% else %}<p class="muted">This offer can no longer be accepted.</p>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

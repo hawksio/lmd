@@ -1,0 +1,9 @@
+{% extends "email/_layout.html" %}
+{% block preheader %}Your {{ sub.plan_name }} subscription renews soon.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello,</p>
+<h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">Subscription renewal</h1>
+<p style="margin:0 0 16px;">The {{ sub.plan_name }} subscription for {{ org_name }} {% if sub.status == 'trial' %}trial ends{% else %}current period ends{% endif %} on {{ sub.trial_ends_on if sub.status == 'trial' else sub.current_period_end }}.</p>
+<p style="margin:0 0 16px;">An invoice will follow. Payment is recorded only once it has been received. If you have questions or want to change plan, reply to your platform contact.</p>
+{% endblock %}
+{% block footer %}Platform notification for organisation administrators.{% endblock %}

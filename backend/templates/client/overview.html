@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, financing %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+{% set active = apps|rejectattr('status', 'in', ['declined', 'withdrawn', 'cancelled', 'fully_disbursed', 'draft'])|list %}
+<div class="page-head">
+  <div><h1>Hello, {{ current_user().full_name.split(' ')[0] }}</h1><p>Here's where things stand.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('client.new_application') }}">Start a new application</a>
+</div>
+
+{% if progress.done < progress.total %}
+<section class="panel onboarding" aria-labelledby="ob-h">
+  <h2 id="ob-h">Your next steps</h2>
+  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ progress.total }}" aria-valuenow="{{ progress.done }}" aria-label="{{ progress.done }} of {{ progress.total }} steps done">
+    <span style="--w: {{ progress.percent }}%"></span></div>
+  <ol class="step-list">
+    {% for label, ok, link in progress.steps %}
+      <li class="{{ 'done' if ok else '' }}"><span class="tick" aria-hidden="true">{{ '✓' if ok else loop.index }}</span>
+        {% if not ok and link %}<a href="{{ link }}">{{ label }}</a>{% else %}{{ label }}{% endif %}{% if ok %}<span class="sr"> (done)</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+{% for a, s in funded %}
+<section class="panel">
+  <h2>{{ a.company_name }} · {{ a.id|ref }}</h2>
+  {{ financing(s) }}
+  <p class="small"><a href="{{ url_for('client.view_application', app_id=a.id) }}#financing">View details</a>{% if a.status in ('partially_approved', 'fully_approved', 'conditionally_approved') %} · <a href="{{ url_for('underwriting.offer', app_id=a.id) }}">Review your offer</a>{% endif %}</p>
+</section>
+{% endfor %}
+
+<div class="layout-2">
+  <section>
+    <h2 class="section-title">Your applications</h2>
+    {% if apps %}
+    <div class="app-cards">
+      {% for a in apps[:4] %}
+      <a class="app-card" href="{{ url_for('client.edit_application', app_id=a.id) if a.status == 'draft' else url_for('client.view_application', app_id=a.id) }}">
+        <h3>{{ a.company_name or 'Untitled application' }}</h3>
+        {{ badge(a.status) }}
+        <span class="meta">{{ a.id|ref }}{% if a.amount %} · {{ money(a.amount * 100, a.currency) }} requested{% endif %} · Updated {{ a.updated_at|date }}
+          {% if a.status == 'draft' %} · <strong>Continue your draft</strong>{% elif a.status in ('documents_required', 'info_requested') %} · <strong>Action needed</strong>{% elif a.status == 'agreement_issued' %} · <strong>Your agreement is ready to review</strong>{% endif %}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="panel empty">
+      <h3>No applications yet</h3>
+      <p>Tell us about your business and what you need. You can save a draft and come back any time.</p>
+      <a class="btn btn-primary" href="{{ url_for('client.new_application') }}">Start your application</a>
+    </div>
+    {% endif %}
+  </section>
+  <section class="panel">
+    <h2>Latest updates</h2>
+    <ul class="note-list">
+      {% for n in notifications %}
+        <li class="{{ '' if n.read_at else 'unread' }}">{% if n.link %}<a href="{{ n.link }}">{{ n.message }}</a>{% else %}{{ n.message }}{% endif %}<small>{{ n.created_at|date }}</small></li>
+      {% else %}
+        <li class="muted">Nothing new yet.</li>
+      {% endfor %}
+    </ul>
+    <p class="small"><a href="{{ url_for('client.messages') }}">All messages and updates</a> · {{ doc_count }} document{{ '' if doc_count == 1 else 's' }} uploaded</p>
+  </section>
+</div>
+{% endblock %}

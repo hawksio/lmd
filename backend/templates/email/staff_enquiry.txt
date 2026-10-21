@@ -1,0 +1,5 @@
+New website enquiry from {{ enquiry.name }} ({{ enquiry.company }}) about {{ TOPICS.get(enquiry.topic, enquiry.topic) }}.
+
+{{ base_url }}/admin/enquiries/{{ enquiry.id }}
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

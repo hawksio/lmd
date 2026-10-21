@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Messages</h1><p>Latest customer-visible message on each application. Conversations waiting for your reply come first.</p></div></div>
+{% if rows %}
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Application</th><th>Latest message</th><th>When</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr><td><a href="{{ url_for('admin.application', app_id=r.id) }}#notes">{{ r.company_name or 'Untitled' }}</a><span class="sub">{{ r.id|ref }} · {{ r.full_name }}</span></td>
+      <td class="clip">{{ r.body[:160] }}{% if r.body|length > 160 %}…{% endif %}</td><td class="muted small">{{ r.created_at|date }}</td>
+      <td>{% if r.last_role == 'client' %}<span class="tag-sm tag-submitted">Awaiting reply</span>{% else %}<span class="tag-sm">Replied</span>{% endif %}</td></tr>
+  {% endfor %}</tbody></table></div>
+{% else %}<div class="panel empty"><p>No messages yet.</p></div>{% endif %}
+{% endblock %}

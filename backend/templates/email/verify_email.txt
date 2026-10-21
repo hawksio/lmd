@@ -1,0 +1,9 @@
+Hello {{ (client or user).full_name.split(' ')[0] }},
+
+Please confirm your email address (the link works once and expires in 24 hours):
+
+{{ link }}
+
+If you didn't create an account, you can ignore this email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

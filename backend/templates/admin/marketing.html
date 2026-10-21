@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Marketing{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Marketing email</h1><p>Only people who opted in, confirmed their email and haven't unsubscribed can be emailed.</p></div>
+  <div class="inline-actions"><a class="btn btn-outline" href="{{ url_for('marketing.suppressions') }}">Suppression list ({{ suppressed }})</a><a class="btn btn-primary" href="{{ url_for('marketing.edit_campaign') }}">New campaign</a></div></div>
+<div class="layout-2">
+  <section>
+    {% if campaigns %}
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Campaign</th><th>Audience</th><th>Status</th><th>Sent</th></tr></thead>
+      <tbody>{% for c in campaigns %}
+        <tr><td><a href="{{ url_for('marketing.campaign', cid=c.id) }}">{{ c.name }}</a><span class="sub">{{ c.subject }}</span></td><td class="small">{{ SEGMENTS[c.segment] }}</td>
+          <td>{{ c.status }}{% if c.scheduled_for and c.status == 'scheduled' %}<span class="sub">{{ c.scheduled_for|date }} UTC</span>{% endif %}</td><td>{{ c.sent_n }}</td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}<div class="panel empty"><p>No campaigns yet.</p></div>{% endif %}
+  </section>
+  <div>
+    <section class="panel">
+      <h2>Before going live</h2>
+      <ul class="checklist">{% for label, ok in checks %}<li class="{{ 'ok' if ok else 'todo' }}">{{ '✓' if ok else '○' }} {{ label }}</li>{% endfor %}</ul>
+    </section>
+    <section class="panel">
+      <h2>Audiences</h2>
+      <dl class="facts">{% for k, label in SEGMENTS.items() %}<dt>{{ label }}</dt><dd>{{ counts[k] }}</dd>{% endfor %}</dl>
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "email/_layout.html" %}
+
+{% block preheader %}A reply to your enquiry.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ enquiry.name.split(' ')[0] }},</p><div style="margin:0 0 16px;white-space:pre-line;">{{ body }}</div><p style="margin:0 0 16px;">{{ staff.full_name }}<br>{{ site.trading_name or 'LMD Finance' }}</p><p style="margin:0;color:#56676A;font-size:14px;">You're receiving this because you sent an enquiry through our website. For your security we never ask for passwords, codes or bank details by email.</p>
+{% endblock %}
+{% block footer %}You contacted LMD Finance through our website.{% endblock %}

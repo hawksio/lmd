@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, badge, review_badge, fee_badge, timeline, financing %}
+{% block title %}{{ app.id|ref }}{% endblock %}
+{% block content %}
+{% set c = app.currency %}
+<a class="crumb" href="{{ url_for('client.applications') }}">My applications</a>
+<div class="page-head">
+  <div>
+    <h1>{{ app.company_name or 'Your application' }}</h1>
+    <p>{{ app.id|ref }} · {{ product.name if product else FINANCE_TYPES.get(app.finance_type, '') }}{% if app.amount %} · {{ money(app.amount * 100, c) }} requested{% endif %}{% if app.term_months %} over {{ app.term_months }} months{% endif %}{% if app.submitted_at %} · Submitted {{ app.submitted_at|date }}{% endif %}</p>
+  </div>
+  {{ badge(app.status) }}
+</div>
+
+{% if app.status == 'draft' %}
+<p class="notice">This is still a draft. <a href="{{ url_for('client.edit_application', app_id=app.id) }}">Continue and submit it</a> when you're ready.</p>
+{% elif app.status in ('documents_required', 'info_requested') %}
+<p class="notice">We need more information. Please check the documents and messages below.</p>
+{% elif app.status in ('partially_approved', 'fully_approved', 'conditionally_approved') %}
+<p class="notice">A decision has been made. <a href="{{ url_for('underwriting.offer', app_id=app.id) }}">Review the offer, its costs and conditions</a>. This is not an agreement and no money has been paid.</p>
+{% elif app.status == 'agreement_issued' %}
+<p class="notice">Your agreement is ready under "Letters and agreements". Read it carefully and ask us any questions before signing.</p>
+{% elif app.status == 'funding_scheduled' %}
+<p class="notice">A payment is being arranged. It has not been made yet; this page will show it once it has actually been paid.</p>
+{% endif %}
+
+<div class="layout-2">
+  <div>
+    {% if summary.approved %}
+    <section class="panel" id="financing">
+      <h2>Your financing</h2>
+      {{ financing(summary) }}
+      {% if summary.decision %}<p class="small"><a href="{{ url_for('underwriting.offer', app_id=app.id) }}">See the full breakdown and repayment schedule</a></p>{% endif %}
+    </section>
+    {% endif %}
+
+    <section class="panel" id="documents">
+      <h2>Documents</h2>
+      {% if requirements %}
+      <h3 class="small-h">What we need</h3>
+      <ul class="doc-list">
+        {% for r in requirements %}
+          <li><span><strong>{{ r.label }}</strong>{% if r.request_note %}<small class="block">{{ r.request_note }}</small>{% endif %}
+            {% if r.document and r.document.customer_note and r.status in DOC_REPLACEABLE %}<small class="block warn">{{ r.document.customer_note }}</small>{% endif %}</span>
+            {{ review_badge(r.status) }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <h3 class="small-h">Your uploads</h3>
+      <ul class="doc-list">
+        {% for d in docs %}
+          <li><span><a href="{{ url_for('client.download_document', doc_id=d.id) }}">{{ d.original_name }}</a>
+            <small class="block">{{ DOC_TYPES.get(d.doc_type, 'Other') }} · {{ (d.size_bytes / 1024)|round|int }} KB · {{ d.created_at|date }}{% if d.uploader_role != 'client' %} · added by us{% endif %}</small>
+            {% if d.customer_note and d.review_status in ('rejected', 'replacement_required', 'expired') %}<small class="block warn">{{ d.customer_note }}</small>{% endif %}</span>
+            <span class="doc-actions">{{ review_badge(d.review_status) }}
+            {% if d.review_status in DOC_REPLACEABLE and not final %}
+              <form method="post" action="{{ url_for('client.upload_document', app_id=app.id) }}" enctype="multipart/form-data" class="mini-form" data-once>
+                {{ csrf() }}<input type="hidden" name="replaces" value="{{ d.id }}">
+                <label class="sr" for="rep{{ d.id }}">Replacement for {{ d.original_name }}</label>
+                <input id="rep{{ d.id }}" name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+                <button class="btn btn-dark btn-sm" type="submit">Upload replacement</button></form>
+            {% endif %}</span></li>
+        {% else %}
+          <li class="muted">Nothing uploaded yet.</li>
+        {% endfor %}
+      </ul>
+      {% if not final %}
+      <form method="post" action="{{ url_for('client.upload_document', app_id=app.id) }}" enctype="multipart/form-data" class="upload" data-once>
+        {{ csrf() }}
+        <div><label for="doc_type">Type of document</label>
+          <select id="doc_type" name="doc_type">{% for k, v in DOC_TYPES.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+        <div><label for="document">File (PDF, JPG or PNG, up to 10 MB)</label>
+          <input id="document" name="document" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" capture="environment" required></div>
+        <button class="btn btn-dark btn-sm" type="submit">Upload</button>
+      </form>
+      <p class="hint">Files are checked, stored privately and only seen by you and authorised staff. Every staff view is recorded.</p>
+      {% endif %}
+    </section>
+
+    {% if position %}
+    <section class="panel" id="repayments">
+      <h2>Repayment schedule</h2>
+      <div class="table-wrap"><table class="data compact">
+        <thead><tr><th>No.</th><th>Due</th><th>Amount</th><th>Paid</th><th>Status</th></tr></thead>
+        <tbody>{% for i in position.instalments %}<tr><td>{{ i.number }}</td><td>{{ i.due_date }}</td><td>{{ money(i.amount_minor, c) }}</td><td>{{ money(i.paid_minor, c) }}</td>
+          <td><span class="tag-sm tag-inst-{{ i.state }}">{{ i.state|replace('_', ' ')|capitalize }}</span></td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% if repayments %}<h3 class="small-h">Payments we've received</h3>
+      <ul class="doc-list">{% for r in repayments %}<li><span>{{ money(r.amount_minor, r.currency) }} on {{ r.received_on }}<small class="block">Reference {{ r.provider_reference }}{% if r.status == 'reversed' %} · reversed: {{ r.reversal_reason }}{% endif %}</small></span>
+        <span class="doc-actions"><span class="tag-sm tag-{{ 'verified' if r.status == 'confirmed' else 'rejected' }}">{{ 'Received' if r.status == 'confirmed' else 'Reversed' }}</span>{% if r.status == 'confirmed' and receipts.get(r.id) %}<a class="btn btn-outline btn-sm" href="{{ url_for('client.download_letter', doc_id=receipts[r.id]) }}">Receipt</a>{% endif %}</span></li>{% endfor %}</ul>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if fees %}
+    <section class="panel" id="fees">
+      <h2>Fees</h2>
+      <ul class="doc-list">{% for f in fees %}
+        <li><span><strong>{{ f.name }}</strong> {{ money(f.amount_minor, f.currency) }}
+          <small class="block">{% if f.percent %}{{ f.percent }}% of {{ money(f.basis_minor, f.currency) }}. {% endif %}{{ f.payable_when }}.</small>
+          {% if f.disclosure %}<small class="block muted">{{ f.disclosure }}</small>{% endif %}</span>{{ fee_badge(f.status) }}</li>
+      {% endfor %}</ul>
+      <p class="hint">Fees are shown as paid only once a payment has been confirmed. No fee is ever required to receive a decision or funds.</p>
+    </section>
+    {% endif %}
+
+    <section class="panel" id="messages">
+      <h2>Messages with the team</h2>
+      <div class="thread">
+        {% for n in notes %}
+          <article class="msg {% if n.author_id == current_user().id %}mine{% endif %}">
+            <header><strong>{{ 'You' if n.author_id == current_user().id else org().name }}</strong><span>{{ n.created_at|date }}</span></header>
+            <p>{{ n.body }}</p>
+          </article>
+        {% else %}
+          <p class="muted">No messages yet. The team will message you here, or you can ask a question below.</p>
+        {% endfor %}
+      </div>
+      {% if not final %}
+      <form method="post" action="{{ url_for('client.send_message', app_id=app.id) }}" class="form" data-once>
+        {{ csrf() }}
+        <div>
+          <label for="body">Send a message</label>
+          <textarea id="body" name="body" rows="3" required maxlength="4000" aria-describedby="body-hint"></textarea>
+          <p class="hint" id="body-hint">Please don't send passwords or full card details.</p>
+        </div>
+        <div><button class="btn btn-primary btn-sm" type="submit">Send</button></div>
+      </form>
+      {% endif %}
+    </section>
+
+    {% if letters %}
+    <section class="panel" id="letters">
+      <h2>Letters and agreements</h2>
+      <ul class="doc-list">
+        {% for l in letters %}
+          <li><span><a href="{{ url_for('client.download_letter', doc_id=l.id) }}">{{ l.title }}</a><small class="block">Issued {{ l.issued_at|date }}</small></span><span class="tag-sm">PDF</span></li>
+        {% endfor %}
+      </ul>
+      <p class="muted small">An issued agreement is not signed. Nothing is binding until both parties have signed through the process we explain to you.</p>
+    </section>
+    {% endif %}
+  </div>
+
+  <div>
+    <section class="panel">
+      <h2>Progress</h2>
+      {{ timeline(app, history) }}
+    </section>
+
+    <section class="panel">
+      <h2>Your answers</h2>
+      <dl class="facts">
+        <dt>Business type</dt><dd>{{ BUSINESS_TYPES.get(app.business_type, '') }}</dd>
+        <dt>Registration number</dt><dd>{{ app.company_number or 'Not given' }}</dd>
+        <dt>Industry</dt><dd>{{ app.industry }}</dd>
+        <dt>Time trading</dt><dd>{{ YEARS_TRADING.get(app.years_trading, '') }}</dd>
+        <dt>Turnover</dt><dd>{{ money((app.annual_turnover or 0) * 100, c)[:-3] }}</dd>
+        <dt>Purpose</dt><dd class="pre">{{ app.purpose }}</dd>
+      </dl>
+      {% if can_withdraw %}
+      <form method="post" action="{{ url_for('client.withdraw', app_id=app.id) }}" class="spaced" data-confirm="Withdraw this application? The team will stop working on it.">
+        {{ csrf() }}
+        <button class="btn btn-danger btn-sm" type="submit">Withdraw application</button>
+      </form>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

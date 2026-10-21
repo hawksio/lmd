@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Platform limits{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Platform limits</h1><p>The highest percentage any organisation can configure for each kind of setting. Organisations can set lower limits for themselves.</p></div></div>
+<p class="notice small">These are technical ceilings, not legal limits. Lawful maximums depend on each organisation's jurisdiction and products, and remain their responsibility.</p>
+<form method="post" class="panel form narrow-form">
+  {{ csrf() }}
+  {% for k, v in RULE_KINDS.items() %}<div><label for="{{ k }}">{{ v }} (max %)</label><input id="{{ k }}" name="{{ k }}" inputmode="decimal" value="{{ caps[k] }}"></div>{% endfor %}
+  <label class="check"><input type="checkbox" name="confirm" value="1"> Apply these limits to every organisation</label>
+  <div><button class="btn btn-primary" type="submit">Save limits</button></div>
+</form>
+{% endblock %}

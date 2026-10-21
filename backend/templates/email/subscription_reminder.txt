@@ -1,0 +1,5 @@
+Hello,
+
+The {{ sub.plan_name }} subscription for {{ org_name }} {% if sub.status == 'trial' %}trial ends{% else %}current period ends{% endif %} on {{ sub.trial_ends_on if sub.status == 'trial' else sub.current_period_end }}.
+
+An invoice will follow. Payment is recorded only once it has been received.

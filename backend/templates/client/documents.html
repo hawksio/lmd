@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import review_badge %}
+{% block title %}My documents{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>My documents</h1><p>Everything you've uploaded, and letters we've issued to you.</p></div></div>
+<section class="panel">
+  <h2>Letters and agreements from LMD Finance</h2>
+  <ul class="doc-list">
+    {% for l in letters %}
+      <li><span><a href="{{ url_for('client.download_letter', doc_id=l.id) }}">{{ l.title }}</a><small class="block">{{ l.company_name }} · {{ l.application_id|ref }} · issued {{ l.issued_at|date }}</small></span><span class="tag-sm">PDF</span></li>
+    {% else %}<li class="muted">None yet.</li>{% endfor %}
+  </ul>
+</section>
+<section class="panel">
+  <h2>Uploaded documents</h2>
+  {% if docs %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead><tr><th>Document</th><th>Type</th><th>Application</th><th>Uploaded</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for d in docs %}
+        <tr><td><a href="{{ url_for('client.download_document', doc_id=d.id) }}">{{ d.original_name }}</a>{% if d.mime in ('image/png', 'image/jpeg') %}<span class="sub"><a href="{{ url_for('client.download_document', doc_id=d.id, view=1) }}" target="_blank" rel="noopener">Preview</a></span>{% endif %}</td>
+          <td>{{ DOC_TYPES.get(d.doc_type, 'Other') }}</td>
+          <td><a href="{{ url_for('client.view_application', app_id=d.app_id) }}#documents">{{ d.app_id|ref }}</a><span class="sub">{{ d.company_name }}</span></td>
+          <td class="muted small">{{ d.created_at|date }}</td>
+          <td>{{ review_badge(d.review_status) }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}<p class="muted">You haven't uploaded anything yet. Upload documents from an application's page.</p>{% endif %}
+</section>
+{% endblock %}

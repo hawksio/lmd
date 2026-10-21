@@ -1,0 +1,9 @@
+Hello {{ user.full_name.split(' ')[0] }},
+
+An LMD Finance staff account has been created for you (role: {{ role }}). Choose your password here (works once, expires in 24 hours):
+
+{{ link }}
+
+Then turn on two-step verification under Account and security.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

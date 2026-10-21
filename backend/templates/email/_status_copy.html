@@ -1,0 +1,15 @@
+{# One plain-English sentence per status, shared by the HTML and text versions. #}
+{% macro explain(status) -%}
+{%- if status == 'submitted' -%}We have your application. This is not a decision; we'll be in touch.
+{%- elif status == 'in_review' -%}The team is reviewing your application and will contact you if anything else is needed.
+{%- elif status == 'documents_requested' -%}We need some more information before we can continue. Please sign in, read the message and upload anything requested.
+{%- elif status == 'with_lender' -%}Your application has been referred to a lender. We'll let you know as soon as we hear back.
+{%- elif status == 'approved' -%}Your application has been approved, subject to conditions. This is not an agreement and no money has been paid. We'll send you an agreement to review before anything is signed.
+{%- elif status == 'agreement_issued' -%}Your agreement is ready to review in the client portal. Please read it carefully and ask us any questions before signing.
+{%- elif status == 'agreement_signed' -%}We have received your signed agreement.
+{%- elif status == 'funding_scheduled' -%}Funding is being arranged. It has not been paid yet; we'll confirm when the payment has been made.
+{%- elif status == 'disbursed' -%}The payment has been made.
+{%- elif status == 'declined' -%}Unfortunately we're not able to offer finance on this application. You can ask us to explain why and what options remain.
+{%- elif status == 'withdrawn' -%}This application has been withdrawn and we have stopped working on it.
+{%- endif -%}
+{%- endmacro %}

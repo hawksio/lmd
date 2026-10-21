@@ -1,0 +1,5 @@
+{{ client.full_name }} sent a message on application {{ app.id|ref }} ({{ app.company_name }}).
+
+{{ base_url }}/admin/applications/{{ app.id }}#notes
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

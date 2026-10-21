@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import badge, pager %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Applications</h1><p>{{ total }} found{% if status %} · {{ STATUSES[status] }}{% endif %}{% if attention %} · needing attention{% endif %}{% if q %} · matching “{{ q }}”{% endif %}</p></div>
+  {% if can('export_data') %}{% set args = request.args.to_dict() %}{% set _ = args.update({'export': 'csv'}) %}<a class="btn btn-outline" href="{{ url_for('admin.applications', **args) }}">Export CSV</a>{% endif %}</div>
+<nav class="chips" aria-label="Filter by status">
+  <a class="chip" href="{{ url_for('admin.applications', q=q or None) }}" {% if not status and not attention %}aria-current="true"{% endif %}>All submitted</a>
+  <a class="chip" href="{{ url_for('admin.applications', attention=1, q=q or None) }}" {% if attention %}aria-current="true"{% endif %}>Needs attention</a>
+  {% for key, label in STATUSES.items() if key != 'draft' %}
+    <a class="chip" href="{{ url_for('admin.applications', status=key, q=q or None) }}" {% if status == key %}aria-current="true"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+<form class="filters" method="get" role="search">
+  {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+  {% if attention %}<input type="hidden" name="attention" value="1">{% endif %}
+  <div><label for="q">Search</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Business, applicant, email or reference" maxlength="100"></div>
+  <div><label for="product">Product</label><select id="product" name="product"><option value="">All</option>{% for p in products %}<option value="{{ p.id }}" {% if request.args.get('product') == p.id|string %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+  <div><label for="from">Submitted from</label><input id="from" name="from" type="date" value="{{ request.args.get('from', '') }}"></div>
+  <div><label for="to">to</label><input id="to" name="to" type="date" value="{{ request.args.get('to', '') }}"></div>
+  <div><label for="sort">Sort by</label>
+    <select id="sort" name="sort">{% for k, label in [('updated', 'Last updated'), ('submitted', 'Submitted'), ('amount', 'Amount'), ('company', 'Business name')] %}<option value="{{ k }}" {% if sort == k %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+  <div><label for="dir">Order</label>
+    <select id="dir" name="dir"><option value="desc" {% if dir == 'desc' %}selected{% endif %}>Newest / largest first</option><option value="asc" {% if dir == 'asc' %}selected{% endif %}>Oldest / smallest first</option></select></div>
+  <button class="btn btn-dark btn-sm" type="submit">Apply</button>
+</form>
+{% if apps %}
+<div class="table-wrap">
+  <table class="data">
+    <thead><tr><th>Application</th><th>Applicant</th><th>Requested</th><th>Status</th><th>Submitted</th><th>Updated</th></tr></thead>
+    <tbody>
+      {% for a in apps %}
+      <tr>
+        <td>{% if a.needs_attention %}<span class="attn" role="img" aria-label="Needs attention" title="Needs attention"></span>{% endif %}<a href="{{ url_for('admin.application', app_id=a.id) }}">{{ a.company_name or 'Untitled' }}</a><span class="sub">{{ a.id|ref }}</span></td>
+        <td>{{ a.full_name }}<span class="sub">{{ a.email }}</span></td>
+        <td>{{ money((a.amount or 0) * 100, a.currency) }}{% if a.term_months %} / {{ a.term_months }}m{% endif %}<span class="sub">{{ FINANCE_TYPES.get(a.finance_type, '') }}</span></td>
+        <td>{{ badge(a.status) }}</td>
+        <td class="muted small">{{ a.submitted_at|date }}</td>
+        <td class="muted small">{{ a.updated_at|date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ pager(page, pages, 'admin.applications') }}
+{% else %}
+<div class="panel empty"><p>No applications match.</p></div>
+{% endif %}
+{% endblock %}

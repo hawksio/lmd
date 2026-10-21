@@ -1,0 +1,18 @@
+﻿{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lmd-site",
+      "runtimeExecutable": "C:\\Users\\hawks\\Desktop\\claud new\\.venv\\Scripts\\python.exe",
+      "runtimeArgs": ["C:\\Users\\hawks\\Desktop\\claud new\\run.py"],
+      "port": 4321
+    },
+    {
+      "name": "lmd-php",
+      "runtimeExecutable": "C:\\Users\\hawks\\Desktop\\claud new\\.tools\\php\\php.exe",
+      "runtimeArgs": ["-S", "127.0.0.1:8090", "-t", "C:\\Users\\hawks\\Desktop\\claud new\\php\\public_html", "C:\\Users\\hawks\\Desktop\\claud new\\php\\public_html\\index.php"],
+      "port": 8090
+    }
+  ]
+}
+

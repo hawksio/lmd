@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Messages and updates</h1><p>Messages are kept with each application. Reply from the application's page.</p></div></div>
+<div class="layout-2">
+  <section class="panel">
+    <h2>Messages</h2>
+    <div class="thread">
+      {% for n in notes %}
+        <article class="msg {% if n.author_id == current_user().id %}mine{% endif %}">
+          <header><strong>{{ 'You' if n.author_id == current_user().id else 'LMD Finance' }} · <a href="{{ url_for('client.view_application', app_id=n.application_id) }}#messages">{{ n.application_id|ref }}</a></strong><span>{{ n.created_at|date }}</span></header>
+          <p>{{ n.body }}</p>
+        </article>
+      {% else %}<p class="muted">No messages yet.</p>{% endfor %}
+    </div>
+  </section>
+  <section class="panel">
+    <h2>Notifications</h2>
+    <ul class="note-list">
+      {% for n in notifications %}
+        <li class="{{ '' if n.read_at else 'unread' }}">{% if n.link %}<a href="{{ n.link }}">{{ n.message }}</a>{% else %}{{ n.message }}{% endif %}<small>{{ n.created_at|date }}</small></li>
+      {% else %}<li class="muted">Nothing yet.</li>{% endfor %}
+    </ul>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, review_badge %}
+{% block title %}Review document{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('documents.queue') }}">Document verification</a>
+<div class="page-head"><div><h1>{{ DOC_TYPES.get(doc.doc_type, 'Document') }}</h1>
+  <p>{{ applicant.full_name }} · <a href="{{ url_for('admin.application', app_id=doc.app_id) }}#documents">{{ doc.app_id|ref }}</a> · uploaded {{ doc.created_at|date }} · {{ (doc.size_bytes / 1024)|round|int }} KB</p></div>
+  {{ review_badge(doc.review_status) }}</div>
+<div class="layout-2">
+  <div>
+    <section class="panel">
+      <h2>The file</h2>
+      {% if can('view_documents') %}
+        {% if doc.mime in ('image/png', 'image/jpeg') %}
+          <p class="small muted">Secure preview (shown in an isolated frame; the access is recorded).</p>
+          <iframe class="doc-preview" src="{{ url_for('admin.download_document', doc_id=doc.id, view=1) }}" title="Document preview" sandbox></iframe>
+        {% else %}<p>PDFs open as a download for safety.</p>{% endif %}
+        <p><a class="btn btn-outline btn-sm" href="{{ url_for('admin.download_document', doc_id=doc.id) }}">Download {{ doc.original_name }}</a></p>
+      {% else %}<p class="muted">Your role can see the document's status but not open the file.</p>{% endif %}
+      <p class="small muted">SHA-256: <code>{{ doc.sha256[:16] }}…</code></p>
+    </section>
+    {% if can('review_documents') %}
+    <section class="panel">
+      <h2>Verification decision</h2>
+      <form method="post" class="form">
+        {{ csrf() }}
+        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+        <div><label for="review_status">Result</label>
+          <select id="review_status" name="review_status">{% for k in ['under_review', 'verified', 'rejected', 'replacement_required', 'expired'] %}<option value="{{ k }}" {% if doc.review_status == k %}selected{% endif %}>{{ DOC_STATUSES[k] }}</option>{% endfor %}</select></div>
+        <div><label for="customer_note">Explanation for the customer</label><textarea id="customer_note" name="customer_note" rows="2" maxlength="1000">{{ doc.customer_note }}</textarea>
+          <p class="hint">Required when rejecting or asking for a replacement. The customer sees this.</p></div>
+        <div><label for="internal_note">Internal review note</label><textarea id="internal_note" name="internal_note" rows="2" maxlength="1000">{{ doc.internal_note }}</textarea>
+          <p class="hint">Staff only.</p></div>
+        <div><label for="expires_on">Document expiry date (optional)</label><input id="expires_on" name="expires_on" type="date" value="{{ doc.expires_on or '' }}"></div>
+        <div><button class="btn btn-primary btn-sm" type="submit">Save decision</button></div>
+      </form>
+    </section>
+    {% endif %}
+  </div>
+  <div>
+    <section class="panel">
+      <h2>Review history</h2>
+      <ol class="timeline">{% for h in history %}
+        <li class="done"><span class="dot"></span><div><strong>{{ DOC_STATUSES.get(h.status, h.status) }}</strong><small>{{ h.created_at|date }} · {{ h.full_name }}</small>
+          {% if h.customer_note %}<small class="block">To customer: {{ h.customer_note }}</small>{% endif %}{% if h.internal_note %}<small class="block muted">Internal: {{ h.internal_note }}</small>{% endif %}</div></li>
+      {% else %}<li><span class="dot"></span><div><strong>Submitted</strong><small>Not reviewed yet</small></div></li>{% endfor %}</ol>
+    </section>
+    <section class="panel">
+      <h2>Versions of this document</h2>
+      <ul class="doc-list">{% for v in versions %}<li><span><a href="{{ url_for('documents.review', doc_id=v.id) }}">{{ v.original_name }}</a><small class="block">{{ v.created_at|date }}{% if v.id == doc.id %} · this one{% endif %}</small></span>{{ review_badge(v.review_status) }}</li>{% endfor %}</ul>
+    </section>
+  </div>
+</div>
+{% endblock %}

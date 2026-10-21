@@ -1,0 +1,10 @@
+Hello {{ (client or user).full_name.split(' ')[0] }},
+
+Someone tried to create a new LMD Finance account with this email address. You already have one, so nothing changed.
+
+Sign in: {{ base_url }}/account/login
+Reset your password: {{ base_url }}/account/forgot
+
+If this wasn't you, you can ignore this email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

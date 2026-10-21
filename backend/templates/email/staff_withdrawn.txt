@@ -1,0 +1,8 @@
+Application withdrawn: {{ app.company_name }}
+
+{{ client.full_name }} ({{ client.email }}) has withdrawn application {{ app.id|ref }}.
+You may want to stop any work with lenders on this case.
+
+Open it: {{ base_url }}/admin/applications/{{ app.id }}
+
+LMD Finance Ltd (staff notification)

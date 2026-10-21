@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "apify": {
+      "type": "http",
+      "url": "https://mcp.apify.com"
+    },
+    "openseo": {
+      "type": "http",
+      "url": "https://app.openseo.so/mcp"
+    }
+  }
+}

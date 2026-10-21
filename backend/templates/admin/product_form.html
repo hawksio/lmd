@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, input, select, error %}
+{% block title %}{{ product.name if product else 'New product' }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('products.products') }}">Loan products</a>
+<div class="page-head"><div><h1>{{ product.name if product else 'New loan product' }}</h1><p>Interest and fees are set in Financial settings and can be limited to this product.</p></div></div>
+{% set editable = can('manage_products') %}
+<form method="post" class="panel form" novalidate>
+  {{ csrf() }}
+  <fieldset {% if not editable %}disabled{% endif %} class="plain-fieldset">
+  <section class="form-section">
+    <h2>Product</h2>
+    <div class="grid-fields">
+      {{ input('name', 'Name', form, errors, required=true, maxlength=120, cls='full') }}
+      <div class="full"><label for="description">Description (shown to customers)</label><textarea id="description" name="description" rows="2" maxlength="2000">{{ form.get('description', '') }}</textarea></div>
+      {{ select('finance_type', 'Category', FINANCE_TYPES, form, errors, blank=false) }}
+      <div><span class="label">Currencies</span>
+        <div class="checks">{% for k in CURRENCIES %}<label class="check"><input type="checkbox" name="currencies" value="{{ k }}" {% if k in (form.get('currencies') or '') %}checked{% endif %}> {{ k }}</label>{% endfor %}</div>
+        {{ error(errors, 'currencies') }}</div>
+    </div>
+  </section>
+  <section class="form-section">
+    <h2>Limits</h2>
+    <div class="grid-fields">
+      {{ input('min_amount', 'Minimum amount', form, errors, money=true, value=(form.min_amount_minor / 100) if form.get('min_amount_minor') else form.get('min_amount', '')) }}
+      {{ input('max_amount', 'Maximum amount', form, errors, money=true, value=(form.max_amount_minor / 100) if form.get('max_amount_minor') else form.get('max_amount', '')) }}
+      {{ input('min_term_months', 'Shortest term (months)', form, errors, type='number') }}
+      {{ input('max_term_months', 'Longest term (months)', form, errors, type='number') }}
+      <label class="check full"><input type="checkbox" name="allow_above_requested" value="1" {% if form.get('allow_above_requested') %}checked{% endif %}> Policy allows approving more than the customer requested</label>
+      {{ input('second_approval_threshold', 'Second-approval threshold (optional)', form, errors, money=true, hint='Approvals at or above this need a second authorised person. Empty = organisation setting.', value=(form.second_approval_threshold_minor / 100) if form.get('second_approval_threshold_minor') is not none else '') }}
+    </div>
+  </section>
+  <section class="form-section">
+    <h2>Repayment</h2>
+    <div class="grid-fields">
+      {{ select('interest_method', 'Interest method', INTEREST_METHODS if INTEREST_METHODS is defined else {'amortising': 'Reducing balance (amortising)', 'flat': 'Flat rate'}, form, errors, blank=false) }}
+      {{ select('repayment_frequency', 'Repayment frequency', FREQUENCIES, form, errors, blank=false) }}
+      {{ input('grace_period_months', 'Grace period (months, interest only)', form, errors, type='number', hint='Only if your policy permits. 0 = none.') }}
+      {{ input('repayment_method', 'Repayment method', form, errors, hint='e.g. Direct debit', maxlength=120) }}
+    </div>
+  </section>
+  <section class="form-section">
+    <h2>Eligibility and application</h2>
+    <div class="grid-fields">
+      <div class="full"><label for="eligibility">Eligibility requirements (shown to staff; summarise for customers in the description)</label><textarea id="eligibility" name="eligibility" rows="3" maxlength="3000">{{ form.get('eligibility', '') }}</textarea></div>
+      <div class="full"><span class="label">Required documents</span>
+        <div class="checks">{% for k, v in DOC_TYPES.items() %}<label class="check"><input type="checkbox" name="required_docs" value="{{ k }}" {% if k in (form.get('required_docs') or '').split(',') %}checked{% endif %}> {{ v }}</label>{% endfor %}</div></div>
+      <div class="full"><label for="form_fields">Extra application questions (JSON)</label>
+        <textarea id="form_fields" name="form_fields" rows="4" class="mono" {% if errors.form_fields %}aria-invalid="true"{% endif %}>{{ form.get('form_fields', '[]') }}</textarea>
+        <p class="hint">Types: text, number, select (with "options"), yesno. Example: [{"key": "vat_registered", "label": "Are you VAT registered?", "type": "yesno", "required": true}]</p>
+        {{ error(errors, 'form_fields') }}</div>
+      <label class="check full"><input type="checkbox" name="active" value="1" {% if form.get('active') %}checked{% endif %}> Active (customers can choose it)</label>
+    </div>
+  </section>
+  </fieldset>
+  {% if editable %}<div class="form-actions"><button class="btn btn-primary" type="submit">Save product</button></div>{% endif %}
+</form>
+{% endblock %}

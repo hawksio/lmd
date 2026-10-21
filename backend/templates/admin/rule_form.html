@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, input, select, error %}
+{% block title %}{{ rule.name if rule else 'New financial setting' }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('products.financial_settings') }}">Financial settings</a>
+<div class="page-head"><div><h1>{{ rule.name if rule else 'New financial setting' }}</h1>
+  <p>{% if rule %}Version {{ rule.version }}. {% endif %}Saving creates a new version; existing offers and agreements are not changed.</p></div></div>
+{% set editable = can('manage_financial_settings') %}
+<div class="layout-2">
+<form method="post" class="panel form" novalidate>
+  {{ csrf() }}
+  <fieldset {% if not editable %}disabled{% endif %} class="plain-fieldset">
+  <div class="grid-fields">
+    {{ select('kind', 'Type', RULE_KINDS, form, errors, blank=false) }}
+    {{ input('name', 'Name', form, errors, required=true, maxlength=120) }}
+    <div class="full"><label for="description">What it applies to</label><textarea id="description" name="description" rows="2" maxlength="1000">{{ form.get('description', '') }}</textarea></div>
+    {{ select('method', 'Calculation', {'percent': 'Percentage', 'fixed': 'Fixed amount'}, form, errors, blank=false) }}
+    {{ input('percent', 'Percentage (%)', form, errors, hint='Up to 4 decimal places. Interest is an annual rate. Limit for this type: see right.', value=form.get('percent') or '') }}
+    {{ input('fixed_amount', 'Fixed amount', form, errors, money=true, value=(form.fixed_minor / 100) if form.get('fixed_minor') is not none else form.get('fixed_amount', '')) }}
+    {{ select('basis', 'Calculated on', RULE_BASES, form, errors, blank=false) }}
+    {{ select('timing', 'When it applies', RULE_TIMINGS, form, errors, blank=false, cls='full') }}
+    <div><span class="label">Products</span><div class="checks">{% for p in products %}<label class="check"><input type="checkbox" name="product_ids" value="{{ p.id }}" {% if p.id|string in (form.get('product_ids') or '').split(',') %}checked{% endif %}> {{ p.name }}</label>{% endfor %}</div>
+      <p class="hint">None ticked = all products.</p></div>
+    <div><span class="label">Currencies</span><div class="checks">{% for k in CURRENCIES %}<label class="check"><input type="checkbox" name="currencies" value="{{ k }}" {% if k in (form.get('currencies') or '').split(',') %}checked{% endif %}> {{ k }}</label>{% endfor %}</div>
+      <p class="hint">None ticked = all currencies.</p></div>
+    {{ input('effective_from', 'Effective from', form, errors, type='date') }}
+    {{ input('effective_to', 'Effective until (optional)', form, errors, type='date', value=form.get('effective_to') or '') }}
+    <div class="full"><label for="conditions">Conditions</label><textarea id="conditions" name="conditions" rows="2" maxlength="1000">{{ form.get('conditions', '') }}</textarea></div>
+    <div class="full"><label for="disclosure">Disclosure shown to customers</label><textarea id="disclosure" name="disclosure" rows="2" maxlength="2000" {% if errors.disclosure %}aria-invalid="true"{% endif %}>{{ form.get('disclosure', '') }}</textarea>{{ error(errors, 'disclosure') }}</div>
+    {{ input('arrangement_reference', 'Commission arrangement reference', form, errors, hint='Required for commission: the documented arrangement it comes from.', maxlength=200, cls='full') }}
+    <label class="check full"><input type="checkbox" name="enabled" value="1" {% if form.get('enabled') %}checked{% endif %}> Enabled</label>
+    <div class="full"><label for="reason">Reason for this change (kept in the history)</label><input id="reason" name="reason" maxlength="500"></div>
+    <label class="check full"><input type="checkbox" name="confirm" value="1"> I confirm this setting has been approved under our pricing policy and is permitted where we lend</label>
+    {{ error(errors, 'confirm') }}
+  </div>
+  </fieldset>
+  {% if editable %}<div class="form-actions"><button class="btn btn-primary" type="submit">Save setting</button></div>{% endif %}
+</form>
+<div>
+  <section class="panel">
+    <h2>Limits</h2>
+    <dl class="facts compact">{% for k, v in RULE_KINDS.items() %}<dt>{{ v }}</dt><dd>{{ caps[k] }}%</dd>{% endfor %}</dl>
+    <p class="hint">Set by the platform and tightened in Organisation settings.</p>
+  </section>
+  <section class="panel">
+    <h2>Change history</h2>
+    {% for h in history %}
+      <div class="history-item"><p><strong>v{{ h.version }} · {{ h.action }}</strong> <span class="muted small">{{ h.changed_at|date }} · {{ h.full_name }}</span></p>
+        {% if h.reason %}<p class="small">{{ h.reason }}</p>{% endif %}
+        {% if h.action == 'updated' %}<table class="data compact"><thead><tr><th>Field</th><th>Before</th><th>After</th></tr></thead><tbody>
+          {% for k, v in h.new.items() %}<tr><td>{{ k }}</td><td>{{ h.old.get(k) }}</td><td>{{ v }}</td></tr>{% endfor %}</tbody></table>{% endif %}</div>
+    {% else %}<p class="muted small">No changes yet.</p>{% endfor %}
+  </section>
+</div>
+</div>
+{% endblock %}

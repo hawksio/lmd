@@ -1,0 +1,28 @@
+{
+  "_note": "Source photos are from Unsplash (free Unsplash License, commercial use allowed, no attribution required). 'id' is the images.unsplash.com photo id. Run tools/fetch-images.ps1 to regenerate the optimised variants.",
+  "variants": {
+    "lg": { "w": 1600, "ratio": "desktop" },
+    "md": { "w": 960,  "ratio": "desktop" },
+    "sm": { "w": 640,  "ratio": "mobile" }
+  },
+  "images": [
+    { "file": "hero/hero-team",            "id": "1758518731296-20e24e58846f", "desktop": [16, 9],  "mobile": [4, 5], "crop": "faces" },
+    { "file": "team/team-group",           "id": "1758691736975-9f7f643d178e", "desktop": [16, 9],  "mobile": [1, 1], "crop": "faces" },
+    { "file": "team/team-standing",        "id": "1758518731468-98e90ffd7430", "desktop": [4, 3],   "mobile": [4, 5], "crop": "faces" },
+    { "file": "team/staff-collaborating",  "id": "1681949287382-052ea3954a51", "desktop": [4, 3],   "mobile": [4, 3], "crop": "entropy" },
+    { "file": "team/employee-computer",    "id": "1551434678-e076c223a692",    "desktop": [4, 3],   "mobile": [4, 3], "crop": "faces" },
+    { "file": "office/office-reception",   "id": "1758448500688-3ababa93fd67", "desktop": [4, 3],   "mobile": [4, 3], "crop": "entropy" },
+    { "file": "consultations/consult-table",      "id": "1758518731706-be5d5230e5a5", "desktop": [16, 9], "mobile": [4, 5], "crop": "faces" },
+    { "file": "consultations/consult-meeting",    "id": "1758518729685-f88df7890776", "desktop": [4, 3],  "mobile": [4, 3], "crop": "faces" },
+    { "file": "consultations/consult-presenting", "id": "1758518730037-a16581a040e8", "desktop": [4, 3],  "mobile": [4, 3], "crop": "faces" },
+    { "file": "consultations/one-to-one",         "id": "1758519288495-5f79a4bbab83", "desktop": [4, 3],  "mobile": [4, 3], "crop": "faces" },
+    { "file": "consultations/adviser-laptop",     "id": "1758519289074-9de36003622b", "desktop": [4, 3],  "mobile": [4, 3], "crop": "faces" },
+    { "file": "consultations/adviser-client",     "id": "1611095790444-1dfa35e37b52", "desktop": [4, 3],  "mobile": [4, 3], "crop": "faces" },
+    { "file": "solutions/owners-documents", "id": "1630487656049-6db93a53a7e9", "desktop": [4, 3], "mobile": [4, 3], "crop": "faces" },
+    { "file": "solutions/owners-review",    "id": "1551135049-8a33b5883817",    "desktop": [4, 3], "mobile": [4, 3], "crop": "faces" },
+    { "file": "solutions/signing",          "id": "1562564055-71e051d33c19",    "desktop": [4, 3], "mobile": [4, 3], "crop": "entropy" },
+    { "file": "solutions/couple-signing",   "id": "1664463760781-f159dfe3af30", "desktop": [4, 3], "mobile": [4, 3], "crop": "entropy" },
+    { "file": "solutions/handshake",        "id": "1672380135241-c024f7fbfa13", "desktop": [4, 3], "mobile": [4, 3], "crop": "entropy" },
+    { "file": "support/support-rep",        "id": "1766066014237-00645c74e9c6", "desktop": [4, 3], "mobile": [4, 5], "crop": "faces" }
+  ]
+}

@@ -1,0 +1,5 @@
+flask==3.1.3
+fpdf2==2.8.1                 # branded PDF letters (pulls in pillow, used to verify uploaded images)
+segno==1.6.1                 # QR code for authenticator-app set-up
+anthropic==1.15.0            # optional AI help assistant (off unless LMD_AI_API_KEY is set)
+gunicorn==23.0.0; sys_platform != "win32"   # production WSGI server on Linux

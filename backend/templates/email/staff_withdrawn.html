@@ -1,0 +1,10 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}{{ client.full_name }} withdrew {{ app.id|ref }}.{% endblock %}
+{% block body %}
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">Application withdrawn</p>
+<h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">{{ app.company_name }}</h1>
+<p style="margin:0;">{{ client.full_name }} ({{ client.email }}) has withdrawn application {{ app.id|ref }}. You may want to stop any work with lenders on this case.</p>
+{{ button(base_url + '/admin/applications/' ~ app.id, 'Open application') }}
+{% endblock %}
+{% block footer %}Staff notification. Sent to the LMD Finance team.{% endblock %}

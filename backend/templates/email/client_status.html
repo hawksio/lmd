@@ -1,0 +1,20 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% from "email/_status_copy.html" import explain %}
+{% block preheader %}{{ explain(app.status) }}{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ client.full_name.split(' ')[0] }},</p>
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">{{ app.id|ref }} · {{ app.company_name }}</p>
+<h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">Status: {{ status_label }}</h1>
+<p style="margin:0 0 16px;">{{ explain(app.status) }}</p>
+{% if message %}
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 8px;"><tr>
+  <td style="border-left:3px solid #F08A6E;background:#FDEFEA;padding:14px 18px;font-size:15px;line-height:1.6;color:#14272B;">
+    <strong style="display:block;margin-bottom:4px;color:#112327;">Message from your adviser</strong>
+    {{ message|replace('\n', '<br>'|safe) }}
+  </td>
+</tr></table>
+{% endif %}
+{{ button(base_url + '/account/applications/' ~ app.id, 'View your application') }}
+<p style="margin:0;color:#56676A;font-size:14px;">For your security we never ask for passwords or bank details by email. If anything looks unusual, call us.</p>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf, breakdown %}
+{% block title %}Financial settings{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Financial settings</h1><p>Percentages and charges used to price approvals. Changes apply to new decisions only; offers and agreements keep the settings they were made with.</p></div>
+  {% if can('manage_financial_settings') %}<a class="btn btn-primary" href="{{ url_for('products.edit_rule') }}">New setting</a>{% endif %}</div>
+<p class="notice small">Only configure rates, fees and charges that your organisation is permitted to charge where it operates, and that are disclosed in your agreements. The software calculates; it does not make a charge lawful.</p>
+
+{% for kind, label in RULE_KINDS.items() %}
+  {% set group = rules|selectattr('kind', 'equalto', kind)|list %}
+  <section class="panel">
+    <div class="panel-head"><h2>{{ label }}</h2>
+      <span class="muted small">Limit: {{ caps[kind] }}%</span>
+      {% if can('manage_financial_settings') %}<a class="btn btn-outline btn-sm" href="{{ url_for('products.edit_rule', kind=kind) }}">Add</a>{% endif %}</div>
+    {% if group %}
+    <div class="table-wrap"><table class="data compact">
+      <thead><tr><th>Name</th><th>Value</th><th>Calculated on</th><th>Applies to</th><th>Effective</th><th>Status</th><th></th></tr></thead>
+      <tbody>{% for r in group %}
+        <tr><td><a href="{{ url_for('products.edit_rule', rid=r.id) }}">{{ r.name }}</a><span class="sub">v{{ r.version }} · {{ r.updated_name }}</span></td>
+          <td>{% if r.method == 'percent' %}{{ r.percent }}%{% else %}{{ money(r.fixed_minor, (r.currencies or org().default_currency).split(',')[0]) }}{% endif %}</td>
+          <td>{{ RULE_BASES[r.basis] }}<span class="sub">{{ RULE_TIMINGS[r.timing] }}</span></td>
+          <td class="small">{{ 'All products' if not r.product_ids else (products|selectattr('id', 'in', r.product_ids.split(',')|map('int')|list)|map(attribute='name')|join(', ')) }}<span class="sub">{{ r.currencies or 'All currencies' }}</span></td>
+          <td class="small">{{ r.effective_from }}{% if r.effective_to %} to {{ r.effective_to }}{% endif %}</td>
+          <td><span class="tag-sm tag-{{ 'verified' if r.enabled else 'rejected' }}">{{ 'Enabled' if r.enabled else 'Disabled' }}</span></td>
+          <td>{% if can('manage_financial_settings') %}<form method="post" action="{{ url_for('products.toggle_rule', rid=r.id) }}" class="mini-form">{{ csrf() }}
+            <label class="check"><input type="checkbox" name="confirm" value="1"> Confirm</label><button class="btn btn-outline btn-sm" type="submit">{{ 'Disable' if r.enabled else 'Enable' }}</button></form>{% endif %}</td></tr>
+      {% endfor %}</tbody></table></div>
+    {% else %}<p class="muted small">None configured.</p>{% endif %}
+  </section>
+{% endfor %}
+
+<section class="panel" id="calculator">
+  <h2>Calculator</h2>
+  <p class="muted small">See the full breakdown the current settings produce. Nothing is saved.</p>
+  <form method="get" class="filters" action="#calculator">
+    <div><label for="calc_product">Product</label><select id="calc_product" name="calc_product">{% for p in products %}<option value="{{ p.id }}" {% if request.args.get('calc_product') == p.id|string %}selected{% endif %}>{{ p.name }}</option>{% endfor %}</select></div>
+    <div><label for="calc_currency">Currency</label><select id="calc_currency" name="calc_currency">{% for k in CURRENCIES %}<option value="{{ k }}" {% if request.args.get('calc_currency', org().default_currency) == k %}selected{% endif %}>{{ k }}</option>{% endfor %}</select></div>
+    <div><label for="calc_amount">Amount</label><input id="calc_amount" name="calc_amount" inputmode="decimal" value="{{ request.args.get('calc_amount', '') }}"></div>
+    <div><label for="calc_term">Term (months)</label><input id="calc_term" name="calc_term" inputmode="numeric" value="{{ request.args.get('calc_term', '') }}"></div>
+    <button class="btn btn-dark btn-sm" type="submit">Calculate</button>
+  </form>
+  {% if calc_error %}<p class="notice error">{{ calc_error }}</p>{% endif %}
+  {% if calc %}{{ breakdown(calc) }}{% endif %}
+</section>
+{% endblock %}

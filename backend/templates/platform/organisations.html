@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Organisations{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Organisations</h1><p>Subscribed finance organisations and their usage.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('platform.new_organisation') }}">New organisation</a></div>
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Organisation</th><th>Plan</th><th>Subscription</th><th>Staff</th><th>Customers</th><th>Applications this month</th><th>Status</th></tr></thead>
+  <tbody>{% for o in rows %}
+    <tr><td><a href="{{ url_for('platform.organisation', oid=o.id) }}">{{ o.name }}</a><span class="sub">{{ o.slug }}</span></td>
+      <td>{{ o.plan_name or 'None' }}</td><td>{{ SUB_STATUSES.get(o.sub_status, 'No subscription') }}</td>
+      <td>{{ o.usage.staff }}</td><td>{{ o.usage.customers }}</td><td>{{ o.usage.apps_month }}</td>
+      <td><span class="tag-sm tag-{{ 'verified' if o.status == 'active' else 'rejected' }}">{{ o.status|capitalize }}</span></td></tr>
+  {% endfor %}</tbody></table></div>
+{% endblock %}

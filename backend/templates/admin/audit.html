@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pager %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Audit log</h1><p>Append-only record of significant events. It never contains passwords, tokens, codes or document contents.</p></div></div>
+<p class="notice {{ 'success' if chain_ok else 'error' }}">{% if chain_ok %}Integrity check passed: {{ checked }} entries, hash chain intact.{% else %}Integrity check FAILED at entry {{ bad }}. The log may have been altered outside the application. Escalate immediately.{% endif %}</p>
+<form class="filters" method="get">
+  <div><label for="event">Event starts with</label><input id="event" name="event" value="{{ event }}" placeholder="e.g. auth. or application.status" maxlength="60"></div>
+  <button class="btn btn-dark btn-sm" type="submit">Filter</button>
+</form>
+<div class="table-wrap">
+  <table class="data">
+    <thead><tr><th>#</th><th>When (UTC)</th><th>Who</th><th>Event</th><th>Target</th><th>Detail</th><th>IP</th></tr></thead>
+    <tbody>{% for l in rows %}
+      <tr><td class="muted small">{{ l.id }}</td><td class="small">{{ l.created_at }}</td>
+        <td>{{ l.full_name or '—' }}<span class="sub">{{ l.actor_role }}</span></td>
+        <td><code>{{ l.event }}</code></td>
+        <td class="small">{% if l.target_type == 'application' and l.target_id %}<a href="{{ url_for('admin.application', app_id=l.target_id) }}">{{ l.target_id|ref }}</a>{% else %}{{ l.target_type }} {{ l.target_id or '' }}{% endif %}</td>
+        <td class="small clip"><code>{{ l.detail }}</code></td><td class="muted small">{{ l.ip }}</td></tr>
+    {% else %}<tr><td colspan="7" class="muted">No entries.</td></tr>{% endfor %}</tbody>
+  </table>
+</div>
+{{ pager(page, pages, 'admin.audit_log') }}
+{% endblock %}

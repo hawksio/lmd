@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Unsubscribe{% endblock %}
+{% block content %}
+<div class="panel auth-card narrow-panel">
+  {% if done %}
+    <h1>You're unsubscribed</h1>
+    <p class="notice success" role="status">{{ email }} won't receive marketing emails from us again. We'll still send emails about your account and any applications.</p>
+  {% else %}
+    <h1>Unsubscribe from marketing</h1>
+    <p>Stop marketing emails to <strong>{{ email }}</strong>?</p>
+    <form method="post" action="{{ url_for('marketing.unsubscribe', token=token) }}">{{ csrf() }}<button class="btn btn-primary" type="submit">Unsubscribe</button></form>
+  {% endif %}
+</div>
+{% endblock %}

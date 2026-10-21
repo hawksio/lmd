@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /account/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /emails/
+
+Sitemap: https://lmdglobalfinltd.com/sitemap.xml

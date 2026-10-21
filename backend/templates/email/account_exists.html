@@ -1,0 +1,6 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}Someone tried to create an account with your email address.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ (client or user).full_name.split(' ')[0] }},</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">You already have an account</h1><p style="margin:0 0 16px;">Someone, probably you, tried to create a new LMD Finance account using this email address. You already have one, so nothing was changed.</p>{{ button(base_url + '/account/login', 'Sign in') }}<p style="margin:0;color:#56676A;font-size:14px;">Forgotten your password? <a href="{{ base_url }}/account/forgot" style="color:#A8452A;">Reset it here</a>. If this wasn't you, you can ignore this email.</p>
+{% endblock %}

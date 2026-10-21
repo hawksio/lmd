@@ -1,0 +1,7 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}New client message on {{ app.id|ref }}.{% endblock %}
+{% block body %}
+<p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">Client message</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">{{ app.company_name }}</h1><p style="margin:0 0 16px;">{{ client.full_name }} sent a message on application {{ app.id|ref }}.</p>{{ button(base_url + '/admin/applications/' ~ app.id + '#notes', 'Open application') }}
+{% endblock %}
+{% block footer %}Staff notification. Sent to the LMD Finance team.{% endblock %}

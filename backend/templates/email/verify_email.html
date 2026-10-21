@@ -1,0 +1,6 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}Confirm your email address to finish setting up your account.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ (client or user).full_name.split(' ')[0] }},</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">Confirm your email address</h1><p style="margin:0 0 16px;">Thanks for creating an LMD Finance account. Please confirm this is your email address. The link works once and expires in 24 hours.</p>{{ button(link, 'Confirm my email') }}<p style="margin:0;color:#56676A;font-size:14px;">If the button doesn't work, copy this address into your browser:<br><span style="word-break:break-all;">{{ link }}</span></p><p style="margin:0;color:#56676A;font-size:14px;"><br>If you didn't create an account, you can ignore this email.</p>
+{% endblock %}

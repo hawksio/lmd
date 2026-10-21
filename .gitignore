@@ -1,0 +1,19 @@
+﻿.venv/
+.tools/
+php/lmd-storage/
+php/config.local.php
+instance/
+__pycache__/
+*.pyc
+*.eml
+.env
+
+
+php/dist/
+php/deploy-private/
+# Belt and braces: never commit databases, local logins or private settings.
+*.sqlite3
+*.sqlite3-*
+dev-*.txt
+config.local.php
+.claude/settings.local.json

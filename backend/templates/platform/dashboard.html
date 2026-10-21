@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import daterange %}
+{% block title %}Platform overview{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Platform overview</h1><p>Organisation-level figures only. Customer data stays inside each organisation.</p></div>
+  <a class="btn btn-primary" href="{{ url_for('platform.new_organisation') }}">New organisation</a></div>
+<div class="tiles">
+  <a class="tile" href="{{ url_for('platform.organisations') }}"><strong>{{ orgs.get('active', 0) }}</strong><span>Active organisations{% if orgs.get('suspended') %} ({{ orgs.suspended }} suspended){% endif %}</span></a>
+  <div class="tile"><strong>{{ subs.get('active', 0) }}</strong><span>Active subscriptions</span></div>
+  <div class="tile"><strong>{{ subs.get('trial', 0) }}</strong><span>On trial</span></div>
+  <div class="tile"><strong>{{ subs.get('past_due', 0) + subs.get('cancelled', 0) }}</strong><span>Past due or cancelled</span></div>
+</div>
+<div class="layout-2 even">
+  <section class="panel">
+    <h2>Subscription revenue (paid invoices)</h2>
+    <form class="filters" method="get">{{ daterange(start, end) }}<button class="btn btn-dark btn-sm" type="submit">Update</button></form>
+    <dl class="facts">{% for r in revenue %}<dt>{{ r.currency }} · {{ r.n }} invoice(s)</dt><dd>{{ money(r.total, r.currency) }}</dd>{% else %}<dt>Paid in period</dt><dd>None</dd>{% endfor %}
+      {% for r in outstanding %}<dt>{{ r.currency }} outstanding · {{ r.n }}</dt><dd>{{ money(r.total, r.currency) }}</dd>{% endfor %}</dl>
+    <p class="hint">Manual billing: revenue counts only invoices recorded as paid with a payment reference. Platform revenue is separate from each organisation's lending revenue.</p>
+  </section>
+  <section class="panel">
+    <h2>Service health</h2>
+    <dl class="facts">
+      <dt>Database check</dt><dd>{{ health.database }}</dd>
+      <dt>Schema version</dt><dd>{{ health.migrations }}</dd>
+      <dt>Failed emails (24 h)</dt><dd>{{ health.failed_emails_24h }}</dd>
+      <dt>Last backup</dt><dd>{{ health.last_backup or 'None found in instance/backups' }}</dd>
+    </dl>
+  </section>
+</div>
+<section class="panel">
+  <h2>Organisation activity</h2>
+  <div class="table-wrap"><table class="data"><thead><tr><th>Organisation</th><th>Status</th><th>Applications (30 days)</th><th>Last activity</th></tr></thead>
+    <tbody>{% for o in activity %}<tr><td><a href="{{ url_for('platform.organisation', oid=o.id) }}">{{ o.name }}</a></td><td>{{ o.status }}</td><td>{{ o.apps_30d }}</td><td class="small muted">{{ o.last_activity|date }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endblock %}

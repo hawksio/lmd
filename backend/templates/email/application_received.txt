@@ -1,0 +1,9 @@
+Hello {{ (client or user).full_name.split(' ')[0] }},
+
+We've received your application {{ app.id|ref }} ({{ app.company_name }}). It is waiting for review. This is not a decision, and nothing has been agreed yet.
+
+View it: {{ base_url }}/account/applications/{{ app.id }}
+
+For your security we never ask for passwords, codes or bank details by email.
+
+{{ site.legal_name or 'LMD Finance' }}{% if site.phone %} · {{ site.phone }}{% endif %}

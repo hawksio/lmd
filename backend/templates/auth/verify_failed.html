@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Link expired{% endblock %}
+{% block content %}
+<div class="panel auth-card narrow-panel">
+  <h1>This link has expired</h1>
+  <p class="muted">Confirmation links work once and last 24 hours. Sign in and use "Send a new link" to get another.</p>
+  <p><a class="btn btn-primary" href="{{ url_for('auth.login') }}">Sign in</a></p>
+</div>
+{% endblock %}

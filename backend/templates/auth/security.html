@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Account and security{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Account and security</h1><p>Your password, two-step verification, signed-in devices{% if not is_staff(user) %} and email preferences{% endif %}.</p></div>
+  {% if not is_staff(user) %}<a class="btn btn-outline" href="{{ url_for('client.profile') }}">Edit my details</a>{% endif %}
+</div>
+{% if must_setup and not user.totp_enabled_at %}<p class="notice error" role="alert">Staff accounts must turn on two-step verification before using the staff area.</p>{% endif %}
+
+<div class="layout-2">
+  <div>
+    <section class="panel" id="mfa">
+      <h2>Two-step verification</h2>
+      {% if recovery_codes %}
+        <div class="notice success">
+          <p><strong>Save these recovery codes now.</strong> Each works once if you lose your phone. They won't be shown again.</p>
+          <ul class="codes">{% for c in recovery_codes %}<li><code>{{ c }}</code></li>{% endfor %}</ul>
+        </div>
+      {% endif %}
+      {% if user.totp_enabled_at %}
+        <p><span class="badge badge-approved">On</span> since {{ user.totp_enabled_at|date }}. {{ recovery_left }} recovery code{{ '' if recovery_left == 1 else 's' }} left.</p>
+        <details class="inline-details"><summary>Turn off two-step verification</summary>
+          <form method="post" action="{{ url_for('auth.mfa_disable') }}" class="form">
+            {{ csrf() }}
+            <div><label for="mfa-password">Password</label><input id="mfa-password" name="password" type="password" autocomplete="current-password" required></div>
+            <div><label for="mfa-code">Current code from your app</label><input id="mfa-code" name="code" inputmode="numeric" autocomplete="one-time-code" required></div>
+            <div><button class="btn btn-danger btn-sm" type="submit">Turn off</button></div>
+          </form>
+        </details>
+      {% elif setup_secret %}
+        <ol class="steps-list">
+          <li>Open an authenticator app (for example Microsoft Authenticator, Google Authenticator or 1Password).</li>
+          <li>Scan this code, or enter the key by hand.
+            <div class="qr">{{ qr_svg|safe }}</div>
+            <p class="small">Key: <code class="key">{{ setup_secret }}</code></p></li>
+          <li>Enter the 6-digit code the app shows.</li>
+        </ol>
+        <form method="post" action="{{ url_for('auth.mfa_confirm') }}" class="form inline-form">
+          {{ csrf() }}
+          <div><label for="setup-code">Code</label><input id="setup-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required></div>
+          <div><button class="btn btn-primary btn-sm" type="submit">Turn on</button></div>
+        </form>
+      {% else %}
+        <p>Add a second step to signing in: a code from an authenticator app on your phone. Strongly recommended{% if is_staff(user) %}, and required for staff in production{% endif %}.</p>
+        <form method="post" action="{{ url_for('auth.mfa_start') }}">{{ csrf() }}<button class="btn btn-primary btn-sm" type="submit">Set up two-step verification</button></form>
+      {% endif %}
+    </section>
+
+    <section class="panel" id="sessions">
+      <h2>Where you're signed in</h2>
+      <ul class="doc-list">
+        {% for s in sessions %}
+          <li><span><strong>{{ s.user_agent[:80] or 'Unknown browser' }}</strong><small class="block">Signed in {{ s.created_at|date }} · last active {{ s.last_seen_at|date }} UTC{% if s.ip %} · {{ s.ip }}{% endif %}</small></span>
+            {% if s.id == this_session %}<span class="tag-sm tag-accepted">This device</span>{% else %}
+            <form method="post" action="{{ url_for('auth.revoke_session', sid=s.id) }}">{{ csrf() }}<button class="btn btn-outline btn-sm" type="submit">Sign out</button></form>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      {% if sessions|length > 1 %}
+      <form method="post" action="{{ url_for('auth.revoke_other_sessions') }}">{{ csrf() }}<button class="btn btn-dark btn-sm" type="submit">Sign out all other devices</button></form>
+      {% endif %}
+    </section>
+  </div>
+
+  <div>
+    <section class="panel" id="password">
+      <h2>Change password</h2>
+      <form method="post" action="{{ url_for('auth.change_password') }}" class="form" novalidate>
+        {{ csrf() }}
+        <div><label for="current">Current password</label><input id="current" name="current" type="password" autocomplete="current-password" required></div>
+        <div><label for="new-password">New password</label><input id="new-password" name="password" type="password" autocomplete="new-password" minlength="10" required aria-describedby="np-hint"><p class="hint" id="np-hint">At least 10 characters. Other devices will be signed out.</p></div>
+        <div><label for="new-confirm">Confirm new password</label><input id="new-confirm" name="confirm" type="password" autocomplete="new-password" required></div>
+        <div><button class="btn btn-primary btn-sm" type="submit">Change password</button></div>
+      </form>
+    </section>
+
+    {% if not is_staff(user) %}
+    <section class="panel" id="marketing">
+      <h2>Email preferences</h2>
+      <p class="muted small">We always email you about your account and applications. Marketing emails are optional and off unless you turn them on.</p>
+      <form method="post" action="{{ url_for('auth.marketing_preference') }}" class="form">
+        {{ csrf() }}
+        <label class="check"><input type="checkbox" name="marketing" value="1" {% if opted_in %}checked{% endif %}> Send me occasional emails about business finance services. I can unsubscribe at any time.</label>
+        <div><button class="btn btn-outline btn-sm" type="submit">Save preference</button></div>
+      </form>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

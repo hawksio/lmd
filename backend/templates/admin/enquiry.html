@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Enquiry from {{ e.name }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ url_for('admin.enquiries') }}">Enquiries</a>
+<div class="page-head"><div><h1>{{ e.name }}</h1><p>{{ e.company }} · {{ TOPICS.get(e.topic, e.topic) }} · received {{ e.created_at|date }}{% if e.handled %} · handled{% endif %}</p></div></div>
+<div class="layout-2">
+  <div>
+    <section class="panel">
+      <h2>Message</h2>
+      <p class="pre">{{ e.message or '(No message)' }}</p>
+    </section>
+    <section class="panel">
+      <h2>Replies</h2>
+      <div class="thread">
+        {% for r in replies %}<article class="msg mine"><header><strong>{{ r.full_name }}</strong><span>{{ r.created_at|date }}</span></header><p>{{ r.body }}</p></article>
+        {% else %}<p class="muted">No replies yet.</p>{% endfor %}
+      </div>
+      {% if can('handle_enquiries') %}
+      <form method="post" action="{{ url_for('admin.enquiry', enq_id=e.id) }}" class="form" data-once>
+        {{ csrf() }}
+        <div><label for="body">Reply by email to {{ e.email }}</label>
+          <textarea id="body" name="body" rows="8" maxlength="6000" required>{{ draft }}</textarea>
+          {% if draft %}<p class="hint warn">AI-generated draft. Check every sentence and remove anything inaccurate before sending.</p>{% endif %}</div>
+        <div class="inline-actions"><button class="btn btn-primary btn-sm" type="submit">Send reply</button></div>
+      </form>
+      {% if ai_drafts %}
+      <form method="post" action="{{ url_for('ai.draft_reply', enq_id=e.id) }}" class="spaced">{{ csrf() }}<button class="btn btn-outline btn-sm" type="submit">Draft a reply with AI</button>
+        <span class="hint">Sends the message text (emails and numbers removed) to the AI provider.</span></form>
+      {% endif %}
+      {% endif %}
+    </section>
+  </div>
+  <section class="panel">
+    <h2>Contact</h2>
+    <dl class="facts"><dt>Email</dt><dd><a href="mailto:{{ e.email }}">{{ e.email }}</a></dd><dt>Phone</dt><dd>{{ e.phone or 'Not given' }}</dd><dt>Business</dt><dd>{{ e.company }}</dd></dl>
+  </section>
+</div>
+{% endblock %}

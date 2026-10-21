@@ -1,0 +1,6 @@
+{% extends "email/_layout.html" %}
+{% from "email/_button.html" import button %}
+{% block preheader %}We have your application {{ app.id|ref }}.{% endblock %}
+{% block body %}
+<p style="margin:0 0 16px;">Hello {{ (client or user).full_name.split(' ')[0] }},</p><p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">{{ app.id|ref }} · {{ app.company_name }}</p><h1 style="margin:0 0 16px;font-family:Georgia,serif;font-size:26px;line-height:1.25;color:#112327;">We've received your application</h1><p style="margin:0 0 16px;">Thank you. Your application has been submitted and is waiting for review. This is not a decision, and nothing has been agreed yet.</p><p style="margin:0 0 16px;">We'll contact you if we need anything else. You can follow progress, upload documents and message the team in the client portal.</p>{{ button(base_url + '/account/applications/' ~ app.id, 'View your application') }}<p style="margin:0;color:#56676A;font-size:14px;">For your security we never ask for passwords, codes or bank details by email.</p>
+{% endblock %}

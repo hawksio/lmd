@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Page not found' if code == 404 else 'Something went wrong' }}{% endblock %}
+{% block content %}
+<div class="panel empty narrow-panel">
+  {% if code == 404 %}
+    <h1>Page not found</h1><p>The page you were looking for doesn't exist or you don't have access to it.</p>
+  {% elif code == 403 %}
+    <h1>No access</h1><p>{{ error.description if error.description and 'permission' not in error.description|lower and error.description != 'Forbidden' else "Your account doesn't have permission to do that." }}</p>
+  {% elif code == 413 %}
+    <h1>File too large</h1><p>Uploads can be up to 10 MB. Please compress the file or split it and try again.</p>
+  {% elif code == 429 %}
+    <h1>Too many requests</h1><p>Please wait a few minutes and try again.</p>
+  {% elif code == 500 %}
+    <h1>Something went wrong</h1><p>We've logged the problem. Please try again, or contact us if it keeps happening.</p>
+  {% else %}
+    <h1>We couldn't do that</h1><p>{{ error.description }}</p>
+  {% endif %}
+  <p><a class="btn btn-primary" href="/account/">Go to the portal</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "email/_layout.html" %}
+
+{% block preheader %}{{ campaign.preheader }}{% endblock %}
+{% block body %}
+{% if test %}<p style="margin:0 0 6px;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#A8452A;font-weight:bold;">Test email: not sent to customers</p>{% endif %}<p style="margin:0 0 16px;">Hello {{ first_name or 'there' }},</p>{% for para in campaign.body.split('\n\n') %}<p style="margin:0 0 16px;">{{ para|replace('\n', '<br>'|safe) }}</p>{% endfor %}
+{% endblock %}
+{% block footer %}You're receiving this because you opted in to emails from {{ site.legal_name or 'LMD Finance' }}. <a href="{{ unsubscribe_link }}" style="color:#56676A;">Unsubscribe</a>. {{ site.show('registered_office') }}.{% endblock %}

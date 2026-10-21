@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Agreements and letters{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Agreements and letters</h1><p>Every generated document, its version and who generated and issued it. Drafts are never visible to customers.</p></div></div>
+<nav class="chips" aria-label="Filter">
+  <a class="chip" href="{{ url_for('admin.letters_list') }}" {% if not kind %}aria-current="true"{% endif %}>All</a>
+  {% for k, v in LETTER_KINDS.items() %}<a class="chip" href="{{ url_for('admin.letters_list', kind=k) }}" {% if kind == k %}aria-current="true"{% endif %}>{{ v }}</a>{% endfor %}
+</nav>
+{% if rows %}
+<div class="table-wrap"><table class="data">
+  <thead><tr><th>Document</th><th>Application</th><th>Generated</th><th>Status</th></tr></thead>
+  <tbody>{% for g in rows %}
+    <tr><td>{% if can('view_documents') %}<a href="{{ url_for('admin.download_letter', doc_id=g.id) }}">{{ g.title }}</a>{% else %}{{ g.title }}{% endif %}</td>
+      <td><a href="{{ url_for('admin.application', app_id=g.application_id) }}#letters">{{ g.company_name }}</a><span class="sub">{{ g.application_id|ref }}</span></td>
+      <td class="small">{{ g.generated_at|date }}<span class="sub">{{ g.generated_by_name }}</span></td>
+      <td><span class="tag-sm tag-{{ 'verified' if g.status == 'issued' else ('submitted' if g.status == 'draft' else 'rejected') }}">{{ g.status|capitalize }}</span></td></tr>
+  {% endfor %}</tbody></table></div>
+{% else %}<div class="panel empty"><p>No documents yet.</p></div>{% endif %}
+{% endblock %}

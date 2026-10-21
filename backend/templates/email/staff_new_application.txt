@@ -1,0 +1,17 @@
+New application: {{ app.company_name }}
+
+A new application has been submitted and is waiting for review.
+
+Reference:       {{ app.id|ref }}
+Client:          {{ client.full_name }}
+Email:           {{ client.email }}
+Phone:           {{ client.phone or 'Not given' }}
+Finance:         {{ FINANCE_TYPES.get(app.finance_type, '') }}
+Amount:          {{ app.amount|gbp }}
+Term:            {{ app.term_months }} months
+Annual turnover: {{ app.annual_turnover|gbp }}
+Time trading:    {{ YEARS_TRADING.get(app.years_trading, '') }}
+
+Review it: {{ base_url }}/admin/applications/{{ app.id }}
+
+LMD Finance Ltd (staff notification)
